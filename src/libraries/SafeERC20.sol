@@ -3,6 +3,7 @@
 
 pragma solidity ^0.8.13;
 
+import {NotContract, FailedCall, InsufficientAllowance} from "../interfaces/Errors.sol";
 import {IERC20} from "../interfaces/IERC20.sol";
 
 /**
@@ -38,31 +39,6 @@ library SafeERC20 {
         );
     }
 
-    /**
-     * @dev Deprecated. This function has issues similar to the ones found in
-     * {IERC20-approve}, and its usage is discouraged.
-     *
-     * Whenever possible, use {safeIncreaseAllowance} and
-     * {safeDecreaseAllowance} instead.
-     */
-    function safeApprove(
-        IERC20 token,
-        address spender,
-        uint256 value
-    ) internal {
-        // safeApprove should only be called when setting an initial allowance,
-        // or when resetting it to zero. To increase and decrease it, use
-        // 'safeIncreaseAllowance' and 'safeDecreaseAllowance'
-        require(
-            (value == 0) || (token.allowance(address(this), spender) == 0),
-            "SafeERC20: approve from non-zero to non-zero allowance"
-        );
-        _callOptionalReturn(
-            token,
-            abi.encodeWithSelector(token.approve.selector, spender, value)
-        );
-    }
-
     function safeIncreaseAllowance(
         IERC20 token,
         address spender,
@@ -86,10 +62,9 @@ library SafeERC20 {
     ) internal {
         unchecked {
             uint256 oldAllowance = token.allowance(address(this), spender);
-            require(
-                oldAllowance >= value,
-                "SafeERC20: decreased allowance below zero"
-            );
+            if (oldAllowance < value) {
+                revert InsufficientAllowance();
+            }
             uint256 newAllowance = oldAllowance - value;
             _callOptionalReturn(
                 token,
@@ -109,17 +84,13 @@ library SafeERC20 {
      * @param data The call data (encoded using abi.encode or one of its variants).
      */
     function _callOptionalReturn(IERC20 token, bytes memory data) private {
-        require(_isContract(address(token)), "not contract");
+        if (target.code.length == 0) {
+            revert NotContract(address(token));
+        }
 
-        (bool success, ) = address(token).call(data);
-        require(success, "SafeERC20: low-level call failed");
-    }
-
-    function _isContract(address target) private view returns (bool) {
-        // This method relies on extcodesize/address.code.length, which returns 0
-        // for contracts in construction, since the code is only stored at the end
-        // of the constructor execution.
-
-        return target.code.length > 0;
+        (bool success, bytes memory returndata) = address(token).call(data);
+        if (!success) {
+            revert FailedCall(address(token), data, returndata);
+        }
     }
 }

@@ -1,9 +1,11 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 pragma solidity ^0.8.13;
 
+import {LengthMismatch, Unauthorized, UnsafeRecipient} from "../interfaces/Errors.sol";
 import {IERC165} from "../interfaces/IERC165.sol";
 import {IERC1155} from "../interfaces/IERC1155.sol";
 import {IERC1155MetadataURI} from "../interfaces/IERC1155MetadataURI.sol";
+import {IERC1155Receiver} from "../interfaces/IERC1155Receiver.sol";
 import {ERC165} from "./ERC165.sol";
 
 /// @notice Minimalist and gas efficient standard ERC1155 implementation.
@@ -28,28 +30,28 @@ abstract contract ERC1155 is IERC1155, IERC1155MetadataURI, ERC165 {
         uint256 amount,
         bytes calldata data
     ) public virtual {
-        require(
-            msg.sender == from || isApprovedForAll[from][msg.sender],
-            "NOT_AUTHORIZED"
-        );
+        if (msg.sender != from && !isApprovedForAll[from][msg.sender]) {
+            revert Unauthorized(msg.sender);
+        }
 
         balanceOf[from][id] -= amount;
         balanceOf[to][id] += amount;
 
         emit TransferSingle(msg.sender, from, to, id, amount);
 
-        require(
+        if (
             to.code.length == 0
-                ? to != address(0)
+                ? to == address(0)
                 : ERC1155TokenReceiver(to).onERC1155Received(
                     msg.sender,
                     from,
                     id,
                     amount,
                     data
-                ) == ERC1155TokenReceiver.onERC1155Received.selector,
-            "UNSAFE_RECIPIENT"
-        );
+                ) != ERC1155TokenReceiver.onERC1155Received.selector
+        ) {
+            revert UnsafeRecipient(to);
+        }
     }
 
     function safeBatchTransferFrom(
@@ -59,12 +61,13 @@ abstract contract ERC1155 is IERC1155, IERC1155MetadataURI, ERC165 {
         uint256[] calldata amounts,
         bytes calldata data
     ) public virtual {
-        require(ids.length == amounts.length, "LENGTH_MISMATCH");
+        if (ids.length != amounts.length) {
+            revert LengthMismatch();
+        }
 
-        require(
-            msg.sender == from || isApprovedForAll[from][msg.sender],
-            "NOT_AUTHORIZED"
-        );
+        if (msg.sender != from && !isApprovedForAll[from][msg.sender]) {
+            revert Unauthorized(msg.sender);
+        }
 
         // Storing these outside the loop saves ~15 gas per iteration.
         uint256 id;
@@ -86,18 +89,19 @@ abstract contract ERC1155 is IERC1155, IERC1155MetadataURI, ERC165 {
 
         emit TransferBatch(msg.sender, from, to, ids, amounts);
 
-        require(
+        if (
             to.code.length == 0
-                ? to != address(0)
+                ? to == address(0)
                 : ERC1155TokenReceiver(to).onERC1155BatchReceived(
                     msg.sender,
                     from,
                     ids,
                     amounts,
                     data
-                ) == ERC1155TokenReceiver.onERC1155BatchReceived.selector,
-            "UNSAFE_RECIPIENT"
-        );
+                ) != ERC1155TokenReceiver.onERC1155BatchReceived.selector
+        ) {
+            revert UnsafeRecipient(to);
+        }
     }
 
     function balanceOfBatch(address[] calldata owners, uint256[] calldata ids)
@@ -106,7 +110,9 @@ abstract contract ERC1155 is IERC1155, IERC1155MetadataURI, ERC165 {
         virtual
         returns (uint256[] memory balances)
     {
-        require(owners.length == ids.length, "LENGTH_MISMATCH");
+        if (owners.length != ids.length) {
+            revert LengthMismatch();
+        }
 
         balances = new uint256[](owners.length);
 
@@ -150,18 +156,19 @@ abstract contract ERC1155 is IERC1155, IERC1155MetadataURI, ERC165 {
 
         emit TransferSingle(msg.sender, address(0), to, id, amount);
 
-        require(
+        if (
             to.code.length == 0
-                ? to != address(0)
+                ? to == address(0)
                 : ERC1155TokenReceiver(to).onERC1155Received(
                     msg.sender,
                     address(0),
                     id,
                     amount,
                     data
-                ) == ERC1155TokenReceiver.onERC1155Received.selector,
-            "UNSAFE_RECIPIENT"
-        );
+                ) != ERC1155TokenReceiver.onERC1155Received.selector
+        ) {
+            revert UnsafeRecipient(to);
+        }
     }
 
     function _batchMint(
@@ -172,7 +179,9 @@ abstract contract ERC1155 is IERC1155, IERC1155MetadataURI, ERC165 {
     ) internal virtual {
         uint256 idsLength = ids.length; // Saves MLOADs.
 
-        require(idsLength == amounts.length, "LENGTH_MISMATCH");
+        if (idsLength != amounts.length) {
+            revert LengthMismatch();
+        }
 
         for (uint256 i = 0; i < idsLength; ) {
             balanceOf[to][ids[i]] += amounts[i];
@@ -186,18 +195,19 @@ abstract contract ERC1155 is IERC1155, IERC1155MetadataURI, ERC165 {
 
         emit TransferBatch(msg.sender, address(0), to, ids, amounts);
 
-        require(
+        if (
             to.code.length == 0
-                ? to != address(0)
+                ? to == address(0)
                 : ERC1155TokenReceiver(to).onERC1155BatchReceived(
                     msg.sender,
                     address(0),
                     ids,
                     amounts,
                     data
-                ) == ERC1155TokenReceiver.onERC1155BatchReceived.selector,
-            "UNSAFE_RECIPIENT"
-        );
+                ) != ERC1155TokenReceiver.onERC1155BatchReceived.selector
+        ) {
+            revert UnsafeRecipient(to);
+        }
     }
 
     function _batchBurn(
@@ -207,7 +217,9 @@ abstract contract ERC1155 is IERC1155, IERC1155MetadataURI, ERC165 {
     ) internal virtual {
         uint256 idsLength = ids.length; // Saves MLOADs.
 
-        require(idsLength == amounts.length, "LENGTH_MISMATCH");
+        if (idsLength != amounts.length) {
+            revert LengthMismatch();
+        }
 
         for (uint256 i = 0; i < idsLength; ) {
             balanceOf[from][ids[i]] -= amounts[i];
@@ -230,29 +242,5 @@ abstract contract ERC1155 is IERC1155, IERC1155MetadataURI, ERC165 {
         balanceOf[from][id] -= amount;
 
         emit TransferSingle(msg.sender, from, address(0), id, amount);
-    }
-}
-
-/// @notice A generic interface for a contract which properly accepts ERC1155 tokens.
-/// @author Solmate (https://github.com/transmissions11/solmate/blob/main/src/tokens/ERC1155.sol)
-abstract contract ERC1155TokenReceiver {
-    function onERC1155Received(
-        address,
-        address,
-        uint256,
-        uint256,
-        bytes calldata
-    ) external virtual returns (bytes4) {
-        return ERC1155TokenReceiver.onERC1155Received.selector;
-    }
-
-    function onERC1155BatchReceived(
-        address,
-        address,
-        uint256[] calldata,
-        uint256[] calldata,
-        bytes calldata
-    ) external virtual returns (bytes4) {
-        return ERC1155TokenReceiver.onERC1155BatchReceived.selector;
     }
 }

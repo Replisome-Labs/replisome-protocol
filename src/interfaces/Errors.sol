@@ -31,11 +31,15 @@ error NotOwner(uint256 tokenId, address account);
 
 error InvalidOwner(uint256 account);
 
-error CallerIsNotOwnerNorApproved(address account);
-
 error InvalidRecipient(address account);
 
 error UnsafeRecipient(address account);
+
+error InsufficientAllowance();
+
+error PermitDeadlineExpired();
+
+error InvalidSigner(address account);
 
 // Copyright
 

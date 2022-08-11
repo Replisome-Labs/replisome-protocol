@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 pragma solidity ^0.8.13;
 
+import {Unauthorized} from "../interfaces/Errors.sol";
+
 /// @notice Simple single owner authorization mixin.
 /// @author Solmate (https://github.com/transmissions11/solmate/blob/main/src/auth/Owned.sol)
 contract Owned {
@@ -17,7 +19,9 @@ contract Owned {
     address public owner;
 
     modifier onlyOwner() virtual {
-        require(msg.sender == owner, "UNAUTHORIZED");
+        if (msg.sender != owner) {
+            revert Unauthorized(msg.sender);
+        }
 
         _;
     }
