@@ -45,8 +45,6 @@ error InvalidSigner(address account);
 
 error InvalidRule(IRule rule);
 
-error UnregisteredMetadata(IMetadata metadata);
-
 error InvalidMetadata(IMetadata metadata);
 
 error InvalidLayer(Layer layer);
@@ -60,3 +58,9 @@ error Untransferable();
 error Uncopiable();
 
 error Unburnable();
+
+// Metadata
+
+error AlreadyRegistered(IMetadata metadata);
+
+error NotRegisterded(IMetadata metadata);
