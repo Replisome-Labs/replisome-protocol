@@ -12,22 +12,38 @@ interface ICopyright is IERC721, IERC2981 {
 
     event PropertyRuleUpdated(uint256 indexed tokenId, IRule indexed rule);
 
-    function metadataOf(uint256 tokenId)
+    function propertyInfoOf(uint256 tokenId)
         external
         view
-        returns (IMetadata metadata, uint256 metadataId);
+        returns (Property property);
 
-    function ruleOf(uint256 tokenId) external view returns (IRule rule);
+    function canDo(
+        address owner,
+        ActionType action,
+        uint256 tokenId
+    ) returns (bool ok);
 
-    function ingredientsOf(uint256 tokenId)
+    function getRoyaltyToken(uint256 tokenId, ActionType action)
         external
         view
-        returns (uint256[] memory ingredients);
+        returns (IERC20 token);
 
-    function ingredientAmountOf(uint256 tokenId, uint256 layerTokenId)
+    function getRoyaltyReceiver(uint256 tokenId, ActionType action)
         external
         view
-        returns (uint256 amount);
+        returns (address receiver);
+
+    function getRoyaltyAmount(
+        uint256 tokenId,
+        ActionType,
+        action,
+        uint256 value
+    ) external view returns (uint256 amount);
+
+    function getIngredients(uint256 tokenId)
+        external
+        view
+        returns (uint256[] ids, uint256[] amounts);
 
     function exist(uint256 tokenId) external view returns (bool ok);
 

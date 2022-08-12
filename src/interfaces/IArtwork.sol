@@ -2,9 +2,10 @@
 pragma solidity ^0.8.13;
 
 import {IERC1155} from "./IERC1155.sol";
+import {IERC2981} from "./IERC2981.sol";
 import {ActionType} from "./Structs.sol";
 
-interface IArtwork is IERC1155 {
+interface IArtwork is IERC1155, IERC2981 {
     function configurator() external view returns (address target);
 
     function copyright() external view returns (address target);

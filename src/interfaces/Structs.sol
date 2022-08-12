@@ -34,4 +34,5 @@ enum ActionType {
   Transfer,
   Copy,
   Burn,
+  Sale,
 }
