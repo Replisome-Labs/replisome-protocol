@@ -20,23 +20,23 @@ interface ICopyright is IERC721, IERC2981 {
     function canDo(
         address owner,
         ActionType action,
-        uint256 tokenId
-    ) returns (bool ok);
+        uint256 tokenId,
+        uint256 amount
+    ) external view returns (bool ok);
 
-    function getRoyaltyToken(uint256 tokenId, ActionType action)
+    function getRoyaltyToken(ActionType action, uint256 tokenId)
         external
         view
         returns (IERC20 token);
 
-    function getRoyaltyReceiver(uint256 tokenId, ActionType action)
+    function getRoyaltyReceiver(ActionType action, uint256 tokenId)
         external
         view
         returns (address receiver);
 
     function getRoyaltyAmount(
+        ActionType action,
         uint256 tokenId,
-        ActionType,
-        action,
         uint256 value
     ) external view returns (uint256 amount);
 

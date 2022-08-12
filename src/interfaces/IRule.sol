@@ -24,21 +24,20 @@ interface IRule is IERC165 {
         view
         returns (bool ok);
 
-    function getRoyaltyReceiver(address actor, ActionType actionType)
+    function getRoyaltyReceiver(ActionType actionType)
         external
         view
         returns (address receiver);
 
-    function getRoyaltyToken(address actor, ActionType actionType)
+    function getRoyaltyToken(ActionType actionType)
         external
         view
         returns (IERC20 token);
 
-    function getRoyaltyAmount(
-        address actor,
-        ActionType actionType,
-        uint256 price
-    ) external view returns (uint256 amount);
+    function getRoyaltyAmount(ActionType actionType, uint256 price)
+        external
+        view
+        returns (uint256 amount);
 
     function getCopyrightRoyalty(uint256 price)
         external

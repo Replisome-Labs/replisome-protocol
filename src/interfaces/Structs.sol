@@ -5,10 +5,10 @@ import {IRule} from "./IRule.sol";
 import {IMetadata} from "./IMetadata.sol";
 
 struct Property {
+  address creator;
   IRule rule;
   IMetadata metadata;
   uint256 metadataId;
-  address creator;
   uint256[] ingredients;
 }
 
@@ -34,5 +34,6 @@ enum ActionType {
   Transfer,
   Copy,
   Burn,
-  Sale,
+  ArtworkSale,
+  CopyrightSale,
 }

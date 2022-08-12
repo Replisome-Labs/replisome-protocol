@@ -1,11 +1,15 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.13;
 
+import {Unauthorized, Untransferable, Uncopiable, Unburnable} from "./interfaces/Errors.sol";
 import {IArtwork} from "./interfaces/IArtwork.sol";
+import {IERC20} from "./interfaces/IERC20.sol";
 import {ERC1155} from "./libraries/ERC1155.sol";
 import {SafeERC20} from "./libraries/SafeERC20.sol";
 
 contract Artwork is IArtwork, ERC1155 {
+    using SafeERC20 for IERC20;
+
     IConfigurator public immutable configurator;
 
     ICopyright public immutable copyright;
@@ -34,10 +38,10 @@ contract Artwork is IArtwork, ERC1155 {
         view
         returns (address receiver, uint256 royaltyAmount)
     {
-        receiver = copyright.getRoyaltyToken(tokenId, ActionType.Sale);
+        receiver = copyright.getRoyaltyToken(tokenId, ActionType.ArtworkSale);
         royaltyAmount = copyright.getRoyaltyAmount(
             tokenId,
-            ActionType.Sale,
+            ActionType.ArtworkSale,
             salePrice
         );
     }
@@ -58,7 +62,7 @@ contract Artwork is IArtwork, ERC1155 {
         uint256 amount,
         bytes calldata data
     ) public override(ERC1155) {
-        if (!copyright.canDo(from, ActionType.Transfer, tokenId)) {
+        if (!copyright.canDo(from, ActionType.Transfer, tokenId, amount)) {
             revert Untransferable();
         }
         super.safeTransferFrom(from, to, id, amount, data);
@@ -73,9 +77,17 @@ contract Artwork is IArtwork, ERC1155 {
     ) public override(ERC1155) {
         unchecked {
             for (uint256 i = 0; i < tokenIds.length; i++) {
-                if (!copyright.canDo(from, ActionType.Transfer, tokenIds[i])) {
+                if (
+                    !copyright.canDo(
+                        from,
+                        ActionType.Transfer,
+                        tokenIds[i],
+                        amounts[i]
+                    )
+                ) {
                     revert Untransferable();
                 }
+            }
             }
         }
         super.safeTransferFrom(from, to, tokenIds, amounts, data);
@@ -98,7 +110,7 @@ contract Artwork is IArtwork, ERC1155 {
             revert Unauthorized(msg.sender);
         }
 
-        if (!copyright.canDo(account, ActionType.Copy, tokenId)) {
+        if (!copyright.canDo(account, ActionType.Copy, tokenId, amount)) {
             revert Uncopiable();
         }
 
@@ -132,7 +144,7 @@ contract Artwork is IArtwork, ERC1155 {
             revert Unauthorized(msg.sender);
         }
 
-        if (!copyright.canDo(account, ActionType.Burn, tokenId)) {
+        if (!copyright.canDo(account, ActionType.Burn, tokenId, amount)) {
             revert Unburnable();
         }
 

@@ -43,13 +43,13 @@ error InvalidSigner(address account);
 
 // Copyright
 
+error InvalidCreator(address account);
+
 error InvalidRule(IRule rule);
 
 error InvalidMetadata(IMetadata metadata);
 
 error InvalidLayer(Layer layer);
-
-error InvalidCreator(address account);
 
 // Artwork
 
@@ -61,6 +61,6 @@ error Unburnable();
 
 // Metadata
 
-error AlreadyRegistered(IMetadata metadata);
+error AlreadyRegisteredMetadata(IMetadata metadata);
 
-error NotRegisterded(IMetadata metadata);
+error NotRegisteredMetadata(IMetadata metadata);
