@@ -1,9 +1,15 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.13;
 
+import {ActionType} from "./interfaces/Structs.sol";
 import {Unauthorized, Untransferable, Uncopiable, Unburnable} from "./interfaces/Errors.sol";
 import {IArtwork} from "./interfaces/IArtwork.sol";
+import {IConfigurator} from "./interfaces/IConfigurator.sol";
+import {ICopyright} from "./interfaces/ICopyright.sol";
+import {IERC1155} from "./interfaces/IERC1155.sol";
+import {IERC165} from "./interfaces/IERC165.sol";
 import {IERC20} from "./interfaces/IERC20.sol";
+import {IERC2981} from "./interfaces/IERC2981.sol";
 import {ERC1155} from "./libraries/ERC1155.sol";
 import {SafeERC20} from "./libraries/SafeERC20.sol";
 
@@ -25,11 +31,12 @@ contract Artwork is IArtwork, ERC1155 {
         public
         view
         virtual
-        override(ERC165, IERC165, IERC1155)
+        override(ERC1155, IERC165)
         returns (bool)
     {
         return
             interfaceId == type(IArtwork).interfaceId ||
+            interfaceId == type(IERC2981).interfaceId ||
             super.supportsInterface(interfaceId);
     }
 
@@ -38,10 +45,13 @@ contract Artwork is IArtwork, ERC1155 {
         view
         returns (address receiver, uint256 royaltyAmount)
     {
-        receiver = copyright.getRoyaltyToken(tokenId, ActionType.ArtworkSale);
-        royaltyAmount = copyright.getRoyaltyAmount(
-            tokenId,
+        receiver = copyright.getRoyaltyReceiver(
             ActionType.ArtworkSale,
+            tokenId
+        );
+        royaltyAmount = copyright.getRoyaltyAmount(
+            ActionType.ArtworkSale,
+            tokenId,
             salePrice
         );
     }
@@ -52,7 +62,7 @@ contract Artwork is IArtwork, ERC1155 {
         override(ERC1155)
         returns (string memory)
     {
-        return "hello";
+        return string(abi.encodePacked(id));
     }
 
     function safeTransferFrom(
@@ -61,11 +71,11 @@ contract Artwork is IArtwork, ERC1155 {
         uint256 tokenId,
         uint256 amount,
         bytes calldata data
-    ) public override(ERC1155) {
+    ) public override(ERC1155, IERC1155) {
         if (!copyright.canDo(from, ActionType.Transfer, tokenId, amount)) {
             revert Untransferable();
         }
-        super.safeTransferFrom(from, to, id, amount, data);
+        super.safeTransferFrom(from, to, tokenId, amount, data);
     }
 
     function safeBatchTransferFrom(
@@ -74,7 +84,7 @@ contract Artwork is IArtwork, ERC1155 {
         uint256[] calldata tokenIds,
         uint256[] calldata amounts,
         bytes calldata data
-    ) public override(ERC1155) {
+    ) public override(ERC1155, IERC1155) {
         unchecked {
             for (uint256 i = 0; i < tokenIds.length; i++) {
                 if (
@@ -88,9 +98,8 @@ contract Artwork is IArtwork, ERC1155 {
                     revert Untransferable();
                 }
             }
-            }
         }
-        super.safeTransferFrom(from, to, tokenIds, amounts, data);
+        super.safeBatchTransferFrom(from, to, tokenIds, amounts, data);
     }
 
     function usedBalanceOf(address account, uint256 tokenId)
@@ -116,18 +125,18 @@ contract Artwork is IArtwork, ERC1155 {
 
         // pay protocol fee
         _payFee(
-            configurator.getFeeToken(),
+            configurator.feeToken(),
             msg.sender,
             configurator.treatury(),
-            configurator.getArtworkCopyFee() * amount
+            configurator.artworkCopyFee() * amount
         );
 
         // pay royalty fee
         _payFee(
-            copyright.getRoyaltyToken(tokenId, ActionType.Copy),
+            copyright.getRoyaltyToken(ActionType.Copy, tokenId),
             msg.sender,
-            copyright.getRoyaltyReceiver(tokenId, ActionType.Copy),
-            copyright.getRoyaltyAmount(tokenId, ActionType.Copy, amount)
+            copyright.getRoyaltyReceiver(ActionType.Copy, tokenId),
+            copyright.getRoyaltyAmount(ActionType.Copy, tokenId, amount)
         );
 
         _consume(account, tokenId, amount);
@@ -150,18 +159,18 @@ contract Artwork is IArtwork, ERC1155 {
 
         // pay protocol fee
         _payFee(
-            configurator.getFeeToken(),
+            configurator.feeToken(),
             msg.sender,
             configurator.treatury(),
-            configurator.getArtworkBurnFee() * amount
+            configurator.artworkBurnFee() * amount
         );
 
         // pay royalty fee
         _payFee(
-            copyright.getRoyaltyToken(tokenId, ActionType.Burn),
+            copyright.getRoyaltyToken(ActionType.Burn, tokenId),
             msg.sender,
-            copyright.getRoyaltyReceiver(tokenId, ActionType.Burn),
-            copyright.getRoyaltyAmount(tokenId, ActionType.Burn, amount)
+            copyright.getRoyaltyReceiver(ActionType.Burn, tokenId),
+            copyright.getRoyaltyAmount(ActionType.Burn, tokenId, amount)
         );
 
         _burn(account, tokenId, amount);
@@ -178,7 +187,13 @@ contract Artwork is IArtwork, ERC1155 {
             uint256[] memory ingredientIds,
             uint256[] memory ingredientAmounts
         ) = copyright.getIngredients(tokenId);
-        _batchBurn(account, ingredientIds, ingredientAmounts);
+        uint256[] memory usedAmounts = new uint256[](ingredientAmounts.length);
+        unchecked {
+            for (uint256 i = 0; i < ingredientAmounts.length; i++) {
+                usedAmounts[i] = ingredientAmounts[i] * amount;
+            }
+        }
+        _batchBurn(account, ingredientIds, usedAmounts);
     }
 
     function _recycle(
@@ -190,7 +205,13 @@ contract Artwork is IArtwork, ERC1155 {
             uint256[] memory ingredientIds,
             uint256[] memory ingredientAmounts
         ) = copyright.getIngredients(tokenId);
-        _batchMint(account, ingredientIds, ingredientAmounts, "");
+        uint256[] memory usedAmounts = new uint256[](ingredientAmounts.length);
+        unchecked {
+            for (uint256 i = 0; i < ingredientAmounts.length; i++) {
+                usedAmounts[i] = ingredientAmounts[i] * amount;
+            }
+        }
+        _batchMint(account, ingredientIds, usedAmounts, "");
     }
 
     function _payFee(

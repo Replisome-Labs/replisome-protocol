@@ -26,7 +26,7 @@ interface ICanvas is IERC165, IERC721Receiver, IERC1155Receiver {
         uint256 amount,
         IRule rule,
         IMetadata metadata,
-        Layer[] layers,
+        Layer[] calldata layers,
         bytes calldata drawing
     ) external;
 

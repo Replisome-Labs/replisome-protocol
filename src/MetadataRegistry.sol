@@ -21,6 +21,6 @@ contract MetadataRegistry is IMetadataRegistry {
             revert NotRegisteredMetadata(metadata);
         }
         isRegistered[metadata] = false;
-        emit Unregister(metadata);
+        emit Unregistered(metadata);
     }
 }

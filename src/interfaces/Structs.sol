@@ -5,35 +5,35 @@ import {IRule} from "./IRule.sol";
 import {IMetadata} from "./IMetadata.sol";
 
 struct Property {
-  address creator;
-  IRule rule;
-  IMetadata metadata;
-  uint256 metadataId;
-  uint256[] ingredients;
+    address creator;
+    IRule rule;
+    IMetadata metadata;
+    uint256 metadataId;
+    uint256[] ingredients;
 }
 
 struct Layer {
-  IMetadata metadata;
-  uint256 metadataId;
-  TransformParam[] transforms;
+    IMetadata metadata;
+    uint256 metadataId;
+    TransformParam[] transforms;
 }
 
 struct TransformParam {
-  TransformType transformType;
-  uint256 value;
+    TransformType transformType;
+    uint256 value;
 }
 
 enum TransformType {
-  TranslateX,
-  TranslateY,
-  Rotate,
-  Flip,
+    TranslateX,
+    TranslateY,
+    Rotate,
+    Flip
 }
 
 enum ActionType {
-  Transfer,
-  Copy,
-  Burn,
-  ArtworkSale,
-  CopyrightSale,
+    Transfer,
+    Copy,
+    Burn,
+    ArtworkSale,
+    CopyrightSale
 }

@@ -29,7 +29,7 @@ error NotMinted(uint256 tokenId);
 
 error NotOwner(uint256 tokenId, address account);
 
-error InvalidOwner(uint256 account);
+error InvalidOwner(address account);
 
 error InvalidRecipient(address account);
 

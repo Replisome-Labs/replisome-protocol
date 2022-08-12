@@ -84,7 +84,7 @@ library SafeERC20 {
      * @param data The call data (encoded using abi.encode or one of its variants).
      */
     function _callOptionalReturn(IERC20 token, bytes memory data) private {
-        if (target.code.length == 0) {
+        if (address(token).code.length == 0) {
             revert NotContract(address(token));
         }
 

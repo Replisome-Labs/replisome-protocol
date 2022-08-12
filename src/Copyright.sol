@@ -1,10 +1,16 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.13;
 
-import {Property} from "./interfaces/Structs.sol";
-import {AlreadyMinted, NotMinted, InvalidRule, InvalidMetadata, InvalidLayer, NotRegisteredMetadata} from "./interfaces/Errors.sol";
+import {Property, Layer, ActionType} from "./interfaces/Structs.sol";
+import {Unauthorized, AlreadyMinted, NotMinted, InvalidRule, InvalidMetadata, InvalidLayer, NotRegisteredMetadata} from "./interfaces/Errors.sol";
 import {ICopyright} from "./interfaces/ICopyright.sol";
+import {IConfigurator} from "./interfaces/IConfigurator.sol";
+import {IMetadataRegistry} from "./interfaces/IMetadataRegistry.sol";
+import {IMetadata} from "./interfaces/IMetadata.sol";
+import {IRule} from "./interfaces/IRule.sol";
+import {IERC165} from "./interfaces/IERC165.sol";
 import {IERC20} from "./interfaces/IERC20.sol";
+import {IERC2981} from "./interfaces/IERC2981.sol";
 import {ERC721} from "./libraries/ERC721.sol";
 import {SafeERC20} from "./libraries/SafeERC20.sol";
 import {ERC165Checker} from "./libraries/ERC165Checker.sol";
@@ -20,7 +26,7 @@ contract Copyright is ICopyright, ERC721("HiggsPixel Copyright", "HPCR") {
     uint256 public totalSupply;
 
     // mapping from tokenId to Property
-    mapping(uint256 => Property) public propertyInfoOf;
+    mapping(uint256 => Property) internal _propertyInfoOf;
 
     // mapping from tokenId to ingredientId to amount
     mapping(uint256 => mapping(uint256 => uint256)) public ingredientAmountOf;
@@ -41,11 +47,12 @@ contract Copyright is ICopyright, ERC721("HiggsPixel Copyright", "HPCR") {
         public
         view
         virtual
-        override(ERC165, IERC165, IERC721)
+        override(ERC721, IERC165)
         returns (bool)
     {
         return
             interfaceId == type(ICopyright).interfaceId ||
+            interfaceId == type(IERC2981).interfaceId ||
             super.supportsInterface(interfaceId);
     }
 
@@ -54,16 +61,29 @@ contract Copyright is ICopyright, ERC721("HiggsPixel Copyright", "HPCR") {
         view
         returns (address receiver, uint256 royaltyAmount)
     {
-        receiver = copyright.getRoyaltyToken(tokenId, ActionType.CopyrightSale);
-        royaltyAmount = copyright.getRoyaltyAmount(
-            tokenId,
+        receiver = getRoyaltyReceiver(ActionType.CopyrightSale, tokenId);
+        royaltyAmount = getRoyaltyAmount(
             ActionType.CopyrightSale,
+            tokenId,
             salePrice
         );
     }
 
-    function tokenURI(uint256 id) public view virtual returns (string memory) {
+    function tokenURI(uint256 id)
+        public
+        view
+        override(ERC721)
+        returns (string memory)
+    {
         return "hello";
+    }
+
+    function propertyInfoOf(uint256 tokenId)
+        external
+        view
+        returns (Property memory property)
+    {
+        property = _propertyInfoOf[tokenId];
     }
 
     function canDo(
@@ -75,7 +95,7 @@ contract Copyright is ICopyright, ERC721("HiggsPixel Copyright", "HPCR") {
         if (!exists(tokenId)) {
             revert NotMinted(tokenId);
         }
-        IRule rule = propertyInfoOf[tokenId].rule;
+        IRule rule = _propertyInfoOf[tokenId].rule;
         if (address(rule) == address(0)) {
             // All permission is open if rule is empty
             ok = true;
@@ -92,14 +112,14 @@ contract Copyright is ICopyright, ERC721("HiggsPixel Copyright", "HPCR") {
     }
 
     function getRoyaltyToken(ActionType action, uint256 tokenId)
-        external
+        public
         view
         returns (IERC20 token)
     {
         if (!exists(tokenId)) {
             revert NotMinted(tokenId);
         }
-        IRule rule = propertyInfoOf[tokenId].rule;
+        IRule rule = _propertyInfoOf[tokenId].rule;
         if (address(rule) == address(0)) {
             token = IERC20(address(0));
         } else {
@@ -108,14 +128,14 @@ contract Copyright is ICopyright, ERC721("HiggsPixel Copyright", "HPCR") {
     }
 
     function getRoyaltyReceiver(ActionType action, uint256 tokenId)
-        external
+        public
         view
         returns (address receiver)
     {
         if (!exists(tokenId)) {
             revert NotMinted(tokenId);
         }
-        IRule rule = propertyInfoOf[tokenId].rule;
+        IRule rule = _propertyInfoOf[tokenId].rule;
         if (address(rule) == address(0)) {
             receiver = address(0);
         } else {
@@ -127,28 +147,28 @@ contract Copyright is ICopyright, ERC721("HiggsPixel Copyright", "HPCR") {
         ActionType action,
         uint256 tokenId,
         uint256 value
-    ) external view returns (uint256 amount) {
+    ) public view returns (uint256 amount) {
         if (!exists(tokenId)) {
             revert NotMinted(tokenId);
         }
-        IRule rule = propertyInfoOf[tokenId].rule;
+        IRule rule = _propertyInfoOf[tokenId].rule;
         if (address(rule) == address(0)) {
-            receiver = uint256(0);
+            amount = uint256(0);
         } else {
-            receiver = rule.getRoyaltyAmount(action, value);
+            amount = rule.getRoyaltyAmount(action, value);
         }
     }
 
     function getIngredients(uint256 tokenId)
         external
         view
-        returns (uint256[] ids, uint256[] amounts)
+        returns (uint256[] memory ids, uint256[] memory amounts)
     {
         if (!exists(tokenId)) {
             revert NotMinted(tokenId);
         }
-        uint256[] memory ids = propertyInfoOf[tokenId].ingredients;
-        uint256[] memory amounts = new uint256[](ids.length);
+        ids = _propertyInfoOf[tokenId].ingredients;
+        amounts = new uint256[](ids.length);
         unchecked {
             for (uint256 i = 0; i < ids.length; i++) {
                 amounts[i] = ingredientAmountOf[tokenId][ids[i]];
@@ -172,7 +192,7 @@ contract Copyright is ICopyright, ERC721("HiggsPixel Copyright", "HPCR") {
         address creator,
         IRule rule,
         IMetadata metadata,
-        Layer[] memory layers,
+        Layer[] calldata layers,
         bytes calldata drawings
     ) external {
         if (!address(rule).supportsInterface(type(IRule).interfaceId)) {
@@ -181,7 +201,7 @@ contract Copyright is ICopyright, ERC721("HiggsPixel Copyright", "HPCR") {
         if (address(metadata) == address(0)) {
             revert InvalidMetadata(metadata);
         }
-        if (!metadataRegistry.isRegisterd(metadata)) {
+        if (!metadataRegistry.isRegistered(metadata)) {
             revert NotRegisteredMetadata(metadata);
         }
 
@@ -195,7 +215,7 @@ contract Copyright is ICopyright, ERC721("HiggsPixel Copyright", "HPCR") {
         if (tokenId == uint256(0)) {
             tokenId = ++totalSupply;
 
-            Property storage property = propertyInfoOf[tokenId];
+            Property storage property = _propertyInfoOf[tokenId];
             property.creator = creator;
             property.rule = rule;
             property.metadata = metadata;
@@ -231,10 +251,11 @@ contract Copyright is ICopyright, ERC721("HiggsPixel Copyright", "HPCR") {
         if (!exists(tokenId)) {
             revert NotMinted(tokenId);
         }
+        address owner = _ownerOf[tokenId];
         if (
-            msg.sender != from &&
-            !isApprovedForAll[from][msg.sender] &&
-            msg.sender != getApproved[id]
+            msg.sender != owner &&
+            !isApprovedForAll[owner][msg.sender] &&
+            msg.sender != getApproved[tokenId]
         ) {
             revert Unauthorized(msg.sender);
         }
@@ -250,7 +271,7 @@ contract Copyright is ICopyright, ERC721("HiggsPixel Copyright", "HPCR") {
             revert InvalidRule(rule);
         }
 
-        IRule storage propertyRule = propertyInfoOf[tokenId].rule;
+        IRule propertyRule = _propertyInfoOf[tokenId].rule;
         if (propertyRule.isUpgradable()) {
             propertyRule = rule;
             emit PropertyRuleUpdated(tokenId, rule);

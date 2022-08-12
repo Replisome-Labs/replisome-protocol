@@ -42,13 +42,13 @@ abstract contract ERC1155 is IERC1155, IERC1155MetadataURI, ERC165 {
         if (
             to.code.length == 0
                 ? to == address(0)
-                : ERC1155TokenReceiver(to).onERC1155Received(
+                : IERC1155Receiver(to).onERC1155Received(
                     msg.sender,
                     from,
                     id,
                     amount,
                     data
-                ) != ERC1155TokenReceiver.onERC1155Received.selector
+                ) != IERC1155Receiver.onERC1155Received.selector
         ) {
             revert UnsafeRecipient(to);
         }
@@ -92,13 +92,13 @@ abstract contract ERC1155 is IERC1155, IERC1155MetadataURI, ERC165 {
         if (
             to.code.length == 0
                 ? to == address(0)
-                : ERC1155TokenReceiver(to).onERC1155BatchReceived(
+                : IERC1155Receiver(to).onERC1155BatchReceived(
                     msg.sender,
                     from,
                     ids,
                     amounts,
                     data
-                ) != ERC1155TokenReceiver.onERC1155BatchReceived.selector
+                ) != IERC1155Receiver.onERC1155BatchReceived.selector
         ) {
             revert UnsafeRecipient(to);
         }
@@ -159,13 +159,13 @@ abstract contract ERC1155 is IERC1155, IERC1155MetadataURI, ERC165 {
         if (
             to.code.length == 0
                 ? to == address(0)
-                : ERC1155TokenReceiver(to).onERC1155Received(
+                : IERC1155Receiver(to).onERC1155Received(
                     msg.sender,
                     address(0),
                     id,
                     amount,
                     data
-                ) != ERC1155TokenReceiver.onERC1155Received.selector
+                ) != IERC1155Receiver.onERC1155Received.selector
         ) {
             revert UnsafeRecipient(to);
         }
@@ -198,13 +198,13 @@ abstract contract ERC1155 is IERC1155, IERC1155MetadataURI, ERC165 {
         if (
             to.code.length == 0
                 ? to == address(0)
-                : ERC1155TokenReceiver(to).onERC1155BatchReceived(
+                : IERC1155Receiver(to).onERC1155BatchReceived(
                     msg.sender,
                     address(0),
                     ids,
                     amounts,
                     data
-                ) != ERC1155TokenReceiver.onERC1155BatchReceived.selector
+                ) != IERC1155Receiver.onERC1155BatchReceived.selector
         ) {
             revert UnsafeRecipient(to);
         }

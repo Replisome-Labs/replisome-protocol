@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 pragma solidity ^0.8.13;
 
-import {PermitDeadlineExpirced, InvalidSigner} from "../interfaces/Errors.sol";
+import {PermitDeadlineExpired, InvalidSigner} from "../interfaces/Errors.sol";
 import {IERC20} from "../interfaces/IERC20.sol";
 
 /// @notice Modern and gas efficient ERC20 + EIP-2612 implementation.

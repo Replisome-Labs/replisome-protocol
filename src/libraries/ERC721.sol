@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 pragma solidity ^0.8.13;
 
-import {Unauthorized, NotMinted, NotOwner, InvalidOwner, UnsafeRecipient} from "../interfaces/Errors.sol";
+import {Unauthorized, AlreadyMinted, NotMinted, NotOwner, InvalidOwner, InvalidRecipient, UnsafeRecipient} from "../interfaces/Errors.sol";
 import {IERC165} from "../interfaces/IERC165.sol";
 import {IERC721} from "../interfaces/IERC721.sol";
 import {IERC721Metadata} from "../interfaces/IERC721Metadata.sol";
-import {ERC721Receiver} from "./ERC721Receiver.sol";
+import {IERC721Receiver} from "../interfaces/IERC721Receiver.sol";
 import {ERC165} from "./ERC165.sol";
 
 /// @notice Modern, minimalist, and gas efficient ERC-721 implementation.
@@ -126,8 +126,8 @@ abstract contract ERC721 is IERC721, IERC721Metadata, ERC165 {
 
         if (
             to.code.length != 0 &&
-            ERC721Receiver(to).onERC721Received(msg.sender, from, id, "") !=
-            ERC721Receiver.onERC721Received.selector
+            IERC721Receiver(to).onERC721Received(msg.sender, from, id, "") !=
+            IERC721Receiver.onERC721Received.selector
         ) {
             revert UnsafeRecipient(to);
         }
@@ -143,8 +143,8 @@ abstract contract ERC721 is IERC721, IERC721Metadata, ERC165 {
 
         if (
             to.code.length != 0 &&
-            ERC721Receiver(to).onERC721Received(msg.sender, from, id, data) !=
-            ERC721Receiver.onERC721Received.selector
+            IERC721Receiver(to).onERC721Received(msg.sender, from, id, data) !=
+            IERC721Receiver.onERC721Received.selector
         ) {
             revert UnsafeRecipient(to);
         }
@@ -217,13 +217,13 @@ abstract contract ERC721 is IERC721, IERC721Metadata, ERC165 {
 
         if (
             to.code.length != 0 &&
-            ERC721Receiver(to).onERC721Received(
+            IERC721Receiver(to).onERC721Received(
                 msg.sender,
                 address(0),
                 id,
                 ""
             ) !=
-            ERC721Receiver.onERC721Received.selector
+            IERC721Receiver.onERC721Received.selector
         ) {
             revert UnsafeRecipient(to);
         }
@@ -238,13 +238,13 @@ abstract contract ERC721 is IERC721, IERC721Metadata, ERC165 {
 
         if (
             to.code.length != 0 &&
-            ERC721Receiver(to).onERC721Received(
+            IERC721Receiver(to).onERC721Received(
                 msg.sender,
                 address(0),
                 id,
                 data
             ) !=
-            ERC721Receiver.onERC721Received.selector
+            IERC721Receiver.onERC721Received.selector
         ) {
             revert UnsafeRecipient(to);
         }
