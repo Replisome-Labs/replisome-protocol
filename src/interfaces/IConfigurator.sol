@@ -7,7 +7,7 @@ import {ICopyrightRenderer} from "./ICopyrightRenderer.sol";
 interface IConfigurator {
     event TreaturyUpdated(address vault);
 
-    event FeeDenominationUpdated(IERC20 token);
+    event FeeTokenUpdated(IERC20 token);
 
     event CopyrightClaimFeeUpdated(uint256 amount);
 
@@ -21,7 +21,7 @@ interface IConfigurator {
 
     function treatury() external view returns (address vault);
 
-    function feeDenomination() external view returns (IERC20 token);
+    function feeToken() external view returns (IERC20 token);
 
     function copyrightClaimFee() external view returns (uint256 amount);
 
@@ -31,14 +31,14 @@ interface IConfigurator {
 
     function artworkBurnFee() external view returns (uint256 amount);
 
-    function CopyrightRenderer()
+    function copyrightRenderer()
         external
         view
         returns (ICopyrightRenderer renderer);
 
     function setTreatury(address vault) external;
 
-    function setFeeDenomination(IERC20 token) external;
+    function setFeeToken(IERC20 token) external;
 
     function setCopyrightClaimFee(uint256 amount) external;
 
