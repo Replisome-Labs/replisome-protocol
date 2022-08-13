@@ -5,9 +5,9 @@ import {IERC20} from "./IERC20.sol";
 import {ICopyrightRenderer} from "./ICopyrightRenderer.sol";
 
 interface IConfigurator {
-    event TreaturyUpdated(address vault);
+    event TreaturyUpdated(address indexed vault);
 
-    event FeeTokenUpdated(IERC20 token);
+    event FeeTokenUpdated(IERC20 indexed token);
 
     event CopyrightClaimFeeUpdated(uint256 amount);
 
@@ -17,7 +17,7 @@ interface IConfigurator {
 
     event ArtworkBurnFeeUpdated(uint256 amount);
 
-    event CopyrightRendererUpdated(ICopyrightRenderer renderer);
+    event CopyrightRendererUpdated(ICopyrightRenderer indexed renderer);
 
     function treatury() external view returns (address vault);
 
