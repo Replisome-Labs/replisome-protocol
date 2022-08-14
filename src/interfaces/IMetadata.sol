@@ -15,6 +15,13 @@ interface IMetadata is IERC165 {
         view
         returns (bytes memory raw);
 
+    function exists(uint256 metadataId) external view returns (bool ok);
+
+    function getIngredients(uint256 metadataId)
+        external
+        view
+        returns (uint256[] memory ids, uint256[] memory amounts);
+
     function verify(Layer[] calldata layers, bytes calldata drawings)
         external
         view

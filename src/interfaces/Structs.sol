@@ -9,12 +9,15 @@ struct Property {
     IRule rule;
     IMetadata metadata;
     uint256 metadataId;
-    uint256[] ingredients;
+}
+
+struct Ingredient {
+    IMetadata metadata;
+    uint256 metadataId;
 }
 
 struct Layer {
-    IMetadata metadata;
-    uint256 metadataId;
+    uint256 tokenId;
     TransformParam[] transforms;
 }
 

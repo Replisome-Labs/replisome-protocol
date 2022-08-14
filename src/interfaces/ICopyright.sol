@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.13;
 
-import {Property, Layer, ActionType} from "./Structs.sol";
+import {Property, ActionType} from "./Structs.sol";
 import {IConfigurator} from "./IConfigurator.sol";
 import {IMetadataRegistry} from "./IMetadataRegistry.sol";
 import {IRule} from "./IRule.sol";
@@ -66,8 +66,7 @@ interface ICopyright is IERC721, IERC2981 {
         address creator,
         IRule rule,
         IMetadata metadata,
-        Layer[] memory layers,
-        bytes calldata drawings
+        uint256 metadataId
     ) external;
 
     function waive(uint256 tokenId) external;

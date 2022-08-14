@@ -64,3 +64,5 @@ error Unburnable();
 error AlreadyRegisteredMetadata(IMetadata metadata);
 
 error NotRegisteredMetadata(IMetadata metadata);
+
+error InexistenceMetadata(IMetadata metadata, uint256 metadataId);

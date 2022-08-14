@@ -2,7 +2,7 @@
 pragma solidity ^0.8.13;
 
 import {Property, Layer, ActionType} from "./interfaces/Structs.sol";
-import {Unauthorized, AlreadyMinted, NotMinted, InvalidRule, InvalidMetadata, InvalidLayer, NotRegisteredMetadata} from "./interfaces/Errors.sol";
+import {Unauthorized, AlreadyMinted, NotMinted, InvalidRule, InvalidMetadata, NotRegisteredMetadata, InexistenceMetadata} from "./interfaces/Errors.sol";
 import {ICopyright} from "./interfaces/ICopyright.sol";
 import {IConfigurator} from "./interfaces/IConfigurator.sol";
 import {IMetadataRegistry} from "./interfaces/IMetadataRegistry.sol";
@@ -27,9 +27,6 @@ contract Copyright is ICopyright, ERC721("HiggsPixel Copyright", "HPCR") {
 
     // mapping from tokenId to Property
     mapping(uint256 => Property) internal _propertyInfoOf;
-
-    // mapping from tokenId to ingredientId to amount
-    mapping(uint256 => mapping(uint256 => uint256)) public ingredientAmountOf;
 
     // mapping from Metadata to metadataId to tokenId
     mapping(IMetadata => mapping(uint256 => uint256))
@@ -167,13 +164,8 @@ contract Copyright is ICopyright, ERC721("HiggsPixel Copyright", "HPCR") {
         if (!exists(tokenId)) {
             revert NotMinted(tokenId);
         }
-        ids = _propertyInfoOf[tokenId].ingredients;
-        amounts = new uint256[](ids.length);
-        unchecked {
-            for (uint256 i = 0; i < ids.length; i++) {
-                amounts[i] = ingredientAmountOf[tokenId][ids[i]];
-            }
-        }
+        Property memory property = _propertyInfoOf[tokenId];
+        (ids, amounts) = property.metadata.getIngredients(property.metadataId);
     }
 
     function exists(uint256 tokenId) public view returns (bool ok) {
@@ -192,8 +184,7 @@ contract Copyright is ICopyright, ERC721("HiggsPixel Copyright", "HPCR") {
         address creator,
         IRule rule,
         IMetadata metadata,
-        Layer[] calldata layers,
-        bytes calldata drawings
+        uint256 metadataId
     ) external {
         if (!address(rule).supportsInterface(type(IRule).interfaceId)) {
             revert InvalidRule(rule);
@@ -204,8 +195,10 @@ contract Copyright is ICopyright, ERC721("HiggsPixel Copyright", "HPCR") {
         if (!metadataRegistry.isRegistered(metadata)) {
             revert NotRegisteredMetadata(metadata);
         }
+        if (!metadata.exists(metadataId)) {
+            revert InexistenceMetadata(metadata, metadataId);
+        }
 
-        uint256 metadataId = metadata.create(layers, drawings);
         uint256 tokenId = _tokenIdByMetadata[metadata][metadataId];
 
         if (exists(tokenId)) {
@@ -220,24 +213,6 @@ contract Copyright is ICopyright, ERC721("HiggsPixel Copyright", "HPCR") {
             property.rule = rule;
             property.metadata = metadata;
             property.metadataId = metadataId;
-
-            mapping(uint256 => uint256)
-                storage tokenIngredientAmount = ingredientAmountOf[tokenId];
-            unchecked {
-                for (uint256 i = 0; i < layers.length; i++) {
-                    Layer memory layer = layers[i];
-                    uint256 ingredientId = _tokenIdByMetadata[layer.metadata][
-                        layer.metadataId
-                    ];
-                    if (ingredientId == uint256(0)) {
-                        revert InvalidLayer(layer);
-                    }
-                    if (tokenIngredientAmount[ingredientId] == uint256(0)) {
-                        property.ingredients.push(ingredientId);
-                    }
-                    tokenIngredientAmount[ingredientId]++;
-                }
-            }
 
             _tokenIdByMetadata[metadata][metadataId] = tokenId;
 
