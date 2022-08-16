@@ -83,6 +83,16 @@ contract Copyright is ICopyright, ERC721("HiggsPixel Copyright", "HPCR") {
         property = _propertyInfoOf[tokenId];
     }
 
+    function metadataOf(uint256 tokenId)
+        external
+        view
+        returns (IMetadata metadata, uint256 metadataId)
+    {
+        Property memory property = _propertyInfoOf[tokenId];
+        metadata = property.metadata;
+        metadataId = property.metadataId;
+    }
+
     function canDo(
         address owner,
         ActionType action,

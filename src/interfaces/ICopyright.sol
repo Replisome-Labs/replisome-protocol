@@ -27,6 +27,11 @@ interface ICopyright is IERC721, IERC2981 {
         view
         returns (Property memory property);
 
+    function metadataOf(uint256 tokenId)
+        external
+        view
+        returns (IMetadata metadata, uint256 metadataId);
+
     function canDo(
         address owner,
         ActionType action,

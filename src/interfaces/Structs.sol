@@ -11,14 +11,14 @@ struct Property {
     uint256 metadataId;
 }
 
-struct Ingredient {
-    IMetadata metadata;
-    uint256 metadataId;
-}
-
 struct Layer {
     uint256 tokenId;
     TransformParam[] transforms;
+}
+
+struct LayerLayout {
+    uint256 width;
+    uint256 height;
 }
 
 struct TransformParam {
