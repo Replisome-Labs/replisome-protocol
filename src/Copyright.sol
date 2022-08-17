@@ -7,6 +7,7 @@ import {ICopyright} from "./interfaces/ICopyright.sol";
 import {IConfigurator} from "./interfaces/IConfigurator.sol";
 import {IMetadataRegistry} from "./interfaces/IMetadataRegistry.sol";
 import {IMetadata} from "./interfaces/IMetadata.sol";
+import {ICopyrightRenderer} from "./interfaces/ICopyrightRenderer.sol";
 import {IRule} from "./interfaces/IRule.sol";
 import {IERC165} from "./interfaces/IERC165.sol";
 import {IERC20} from "./interfaces/IERC20.sol";
@@ -14,6 +15,7 @@ import {IERC2981} from "./interfaces/IERC2981.sol";
 import {ERC721} from "./libraries/ERC721.sol";
 import {SafeERC20} from "./libraries/SafeERC20.sol";
 import {ERC165Checker} from "./libraries/ERC165Checker.sol";
+import {CopyrightDescriptor} from "./utils/CopyrightDescriptor.sol";
 
 contract Copyright is ICopyright, ERC721("HiggsPixel Copyright", "HPCR") {
     using SafeERC20 for IERC20;
@@ -66,13 +68,27 @@ contract Copyright is ICopyright, ERC721("HiggsPixel Copyright", "HPCR") {
         );
     }
 
-    function tokenURI(uint256 id)
+    function tokenURI(uint256 tokenId)
         public
         view
         override(ERC721)
         returns (string memory)
     {
-        return "hello";
+        string memory name = string(
+            abi.encodePacked("HiggsPixel Copyright ", tokenId)
+        );
+        string memory description = string(
+            abi.encodePacked("Copyright ", tokenId, "is powered by HiggsPixel")
+        );
+        ICopyrightRenderer renderer = configurator.copyrightRenderer();
+        CopyrightDescriptor.TokenURIParams memory params = CopyrightDescriptor
+            .TokenURIParams({
+                name: name,
+                description: description,
+                renderer: renderer,
+                tokenId: tokenId
+            });
+        return CopyrightDescriptor.constructTokenURI(params);
     }
 
     function propertyInfoOf(uint256 tokenId)

@@ -6,12 +6,14 @@ import {Unauthorized, Untransferable, Uncopiable, Unburnable} from "./interfaces
 import {IArtwork} from "./interfaces/IArtwork.sol";
 import {IConfigurator} from "./interfaces/IConfigurator.sol";
 import {ICopyright} from "./interfaces/ICopyright.sol";
+import {IMetadata} from "./interfaces/IMetadata.sol";
 import {IERC1155} from "./interfaces/IERC1155.sol";
 import {IERC165} from "./interfaces/IERC165.sol";
 import {IERC20} from "./interfaces/IERC20.sol";
 import {IERC2981} from "./interfaces/IERC2981.sol";
 import {ERC1155} from "./libraries/ERC1155.sol";
 import {SafeERC20} from "./libraries/SafeERC20.sol";
+import {ArtworkDescriptor} from "./utils/ArtworkDescriptor.sol";
 
 contract Artwork is IArtwork, ERC1155 {
     using SafeERC20 for IERC20;
@@ -56,13 +58,29 @@ contract Artwork is IArtwork, ERC1155 {
         );
     }
 
-    function uri(uint256 id)
+    function uri(uint256 tokenId)
         public
         view
         override(ERC1155)
         returns (string memory)
     {
-        return string(abi.encodePacked(id));
+        string memory name = string(
+            abi.encodePacked("HiggsPixel Artwork ", tokenId)
+        );
+        string memory description = string(
+            abi.encodePacked("Artwork ", tokenId, "is powered by HiggsPixel")
+        );
+        (IMetadata metadata, uint256 metadataId) = copyright.metadataOf(
+            tokenId
+        );
+        ArtworkDescriptor.TokenURIParams memory params = ArtworkDescriptor
+            .TokenURIParams({
+                name: name,
+                description: description,
+                metadata: metadata,
+                metadataId: metadataId
+            });
+        return ArtworkDescriptor.constructTokenURI(params);
     }
 
     function safeTransferFrom(

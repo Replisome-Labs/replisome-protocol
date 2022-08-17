@@ -197,6 +197,30 @@ library Quadtree {
         tree.root = 0;
     }
 
+    function getLeaves(Tree storage tree) public view returns (Node[] memory nodes) {
+        uint256 amount = 0;
+
+        unchecked {
+            for (uint32 i = 1; i <= tree.size; i++) {
+                if (isLeaf(tree.nodes[i])) {
+                    amount++;
+                }
+            }
+        }
+
+        nodes = new Node[](amount);
+        uint256 nodeIndex = 0;
+        unchecked {
+            for (uint32 i = 1; i <= tree.size; i++) {
+                Node memory node = tree.nodes[i];
+                if (isLeaf(node)) {
+                    nodes[nodeIndex] = node;
+                    nodeIndex++;
+                }
+            }
+        }
+    }
+
     function isPowerOfTwo(uint32 x) public pure returns (bool result) {
         assembly {
             switch x

@@ -6,6 +6,7 @@ import {ICopyright} from "./interfaces/ICopyright.sol";
 import {IMetadata} from "./interfaces/IMetadata.sol";
 import {SafeCast} from "./libraries/SafeCast.sol";
 import {Quadtree} from "./utils/Quadtree.sol";
+import {RasterRenderer} from "./utils/RasterRenderer.sol";
 
 error UnsupportedMetadata(IMetadata metadata);
 
@@ -57,17 +58,34 @@ abstract contract RasterMetadata is IMetadata {
         boundary = boundary_;
     }
 
-    function readAsSvg(uint256 metadataId)
+    function generateSVG(uint256 metadataId)
         external
         view
         returns (string memory svg)
-    {}
+    {
+        Quadtree.Tree storage tree = _treeOf[metadataId];
+        Quadtree.Node[] memory nodes = tree.getLeaves();
+        RasterRenderer.SVGParams memory params = RasterRenderer.SVGParams({
+            width: width,
+            height: height,
+            nodes: nodes
+        });
+        svg = RasterRenderer.generateSVG(params);
+    }
 
-    function readAsBytes(uint256 metadataId)
+    function readRawData(uint256 metadataId)
         external
         view
         returns (bytes memory raw)
-    {}
+    {
+        Quadtree.Tree storage tree = _treeOf[metadataId];
+        Quadtree.Node[] memory nodes = tree.getLeaves();
+        unchecked {
+            for (uint256 i = 0; i < nodes.length; i++) {
+                raw = abi.encodePacked(raw, nodes[i].toBytes());
+            }
+        }
+    }
 
     function supportsMetadata(IMetadata metadata)
         public
@@ -208,27 +226,7 @@ abstract contract RasterMetadata is IMetadata {
             layout.height = metadata.height();
 
             Quadtree.Tree storage tree = _treeOf[metadataId];
-            uint256 count = 0;
-
-            unchecked {
-                for (uint32 i = 1; i <= tree.size; i++) {
-                    if (tree.nodes[i].isLeaf()) {
-                        count++;
-                    }
-                }
-            }
-
-            nodes = new Quadtree.Node[](count);
-            uint256 nodeIndex = 0;
-            unchecked {
-                for (uint32 i = 1; i <= tree.size; i++) {
-                    Quadtree.Node memory node = tree.nodes[i];
-                    if (node.isLeaf()) {
-                        nodes[nodeIndex] = node;
-                        nodeIndex++;
-                    }
-                }
-            }
+            nodes = tree.getLeaves();
         }
     }
 

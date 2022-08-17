@@ -30,6 +30,16 @@ contract MockCopyright is ICopyright, ERC721("HiggsPixel Copyright", "HPCR") {
         property = _propertyInfoOf[tokenId];
     }
 
+    function metadataOf(uint256 tokenId)
+        external
+        view
+        returns (IMetadata metadata, uint256 metadataId)
+    {
+        Property memory property = _propertyInfoOf[tokenId];
+        metadata = property.metadata;
+        metadataId = property.metadataId;
+    }
+
     function setPropertyInfo(uint256 tokenId, Property memory property)
         external
     {
@@ -72,19 +82,25 @@ contract MockCopyright is ICopyright, ERC721("HiggsPixel Copyright", "HPCR") {
     mapping(IMetadata => mapping(uint256 => uint256)) public search;
 
     function claim(
-        address creator,
-        IRule rule,
-        IMetadata metadata,
-        uint256 metadataId
-    ) external {}
+        address,
+        IRule,
+        IMetadata,
+        uint256
+    ) external pure {
+        return;
+    }
 
-    function waive(uint256 tokenId) external {}
+    function waive(uint256) external pure {
+        return;
+    }
 
-    function updateRule(uint256 tokenId, IRule rule) external {}
+    function updateRule(uint256, IRule) external pure {
+        return;
+    }
 
-    function tokenURI(uint256 id)
+    function tokenURI(uint256)
         public
-        view
+        pure
         override(ERC721)
         returns (string memory)
     {
@@ -104,9 +120,12 @@ contract MockCopyright is ICopyright, ERC721("HiggsPixel Copyright", "HPCR") {
             super.supportsInterface(interfaceId);
     }
 
-    function royaltyInfo(uint256 tokenId, uint256 salePrice)
+    function royaltyInfo(uint256, uint256)
         external
-        view
+        pure
         returns (address receiver, uint256 royaltyAmount)
-    {}
+    {
+        receiver = address(0);
+        royaltyAmount = uint256(0);
+    }
 }

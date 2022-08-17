@@ -11,12 +11,12 @@ interface IMetadata is IERC165 {
 
     function height() external view returns (uint256 h);
 
-    function readAsSvg(uint256 metadataId)
+    function generateSVG(uint256 metadataId)
         external
         view
         returns (string memory svg);
 
-    function readAsBytes(uint256 metadataId)
+    function readRawData(uint256 metadataId)
         external
         view
         returns (bytes memory raw);
