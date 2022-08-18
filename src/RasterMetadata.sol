@@ -4,6 +4,8 @@ pragma solidity ^0.8.13;
 import {Layer, LayerLayout, TransformParam, TransformType} from "./interfaces/Structs.sol";
 import {ICopyright} from "./interfaces/ICopyright.sol";
 import {IMetadata} from "./interfaces/IMetadata.sol";
+import {IERC165} from "./interfaces/IERC165.sol";
+import {ERC165} from "./libraries/ERC165.sol";
 import {SafeCast} from "./libraries/SafeCast.sol";
 import {Quadtree} from "./utils/Quadtree.sol";
 import {RasterRenderer} from "./utils/RasterRenderer.sol";
@@ -18,7 +20,7 @@ error OutOfBoundary();
 
 error MisOrderedTransforms();
 
-abstract contract RasterMetadata is IMetadata {
+contract RasterMetadata is IMetadata, ERC165 {
     using SafeCast for uint256;
     using Quadtree for Quadtree.Tree;
     using Quadtree for Quadtree.Node;
@@ -56,6 +58,18 @@ abstract contract RasterMetadata is IMetadata {
         width = width_;
         height = height_;
         boundary = boundary_;
+    }
+
+    function supportsInterface(bytes4 interfaceId)
+        public
+        view
+        virtual
+        override(ERC165, IERC165)
+        returns (bool)
+    {
+        return
+            interfaceId == type(IMetadata).interfaceId ||
+            super.supportsInterface(interfaceId);
     }
 
     function generateSVG(uint256 metadataId)
