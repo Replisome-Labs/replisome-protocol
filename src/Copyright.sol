@@ -245,7 +245,14 @@ contract Copyright is ICopyright, ERC721("HiggsPixel Copyright", "HPCR") {
             emit PropertyCreated(tokenId, property);
         }
 
-        _safeMint(msg.sender, tokenId);
+        _payFee(
+            configurator.feeToken(),
+            msg.sender,
+            configurator.treatury(),
+            configurator.copyrightClaimFee()
+        );
+
+        _safeMint(creator, tokenId);
     }
 
     function waive(uint256 tokenId) external {
@@ -260,6 +267,13 @@ contract Copyright is ICopyright, ERC721("HiggsPixel Copyright", "HPCR") {
         ) {
             revert Unauthorized(msg.sender);
         }
+
+        _payFee(
+            configurator.feeToken(),
+            msg.sender,
+            configurator.treatury(),
+            configurator.copyrightWaiveFee()
+        );
 
         _burn(tokenId);
     }
@@ -276,6 +290,17 @@ contract Copyright is ICopyright, ERC721("HiggsPixel Copyright", "HPCR") {
         if (propertyRule.isUpgradable()) {
             propertyRule = rule;
             emit PropertyRuleUpdated(tokenId, rule);
+        }
+    }
+
+    function _payFee(
+        IERC20 token,
+        address from,
+        address to,
+        uint256 amount
+    ) internal {
+        if (address(token) != address(0)) {
+            token.safeTransferFrom(from, to, amount);
         }
     }
 }
