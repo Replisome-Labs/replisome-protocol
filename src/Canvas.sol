@@ -61,14 +61,16 @@ contract Canvas is ICanvas, ERC165, ERC721Receiver, ERC1155Receiver {
         Layer[] memory layers = new Layer[](0);
         uint256 tokenId = _createAndClaim(rule, metadata, layers, drawings);
 
-        _payFee(
-            copyright.getRoyaltyToken(ActionType.Copy, tokenId),
-            msg.sender,
-            address(this),
-            copyright.getRoyaltyAmount(ActionType.Copy, tokenId, amount)
-        );
+        if (amount > 0) {
+            _payFee(
+                copyright.getRoyaltyToken(ActionType.Copy, tokenId),
+                msg.sender,
+                address(this),
+                copyright.getRoyaltyAmount(ActionType.Copy, tokenId, amount)
+            );
 
-        artwork.copy(msg.sender, tokenId, amount);
+            artwork.copy(msg.sender, tokenId, amount);
+        }
     }
 
     function compose(
@@ -88,32 +90,36 @@ contract Canvas is ICanvas, ERC165, ERC721Receiver, ERC1155Receiver {
 
         uint256 tokenId = _createAndClaim(rule, metadata, layers, drawings);
 
-        _payFee(
-            copyright.getRoyaltyToken(ActionType.Copy, tokenId),
-            msg.sender,
-            address(this),
-            copyright.getRoyaltyAmount(ActionType.Copy, tokenId, amount)
-        );
+        if (amount > 0) {
+            _payFee(
+                copyright.getRoyaltyToken(ActionType.Copy, tokenId),
+                msg.sender,
+                address(this),
+                copyright.getRoyaltyAmount(ActionType.Copy, tokenId, amount)
+            );
 
-        artwork.copy(msg.sender, tokenId, amount);
+            artwork.copy(msg.sender, tokenId, amount);
+        }
     }
 
     function copy(uint256 tokenId, uint256 amount) external {
-        _payFee(
-            configurator.feeToken(),
-            msg.sender,
-            address(this),
-            configurator.artworkCopyFee() * amount
-        );
+        if (amount > 0) {
+            _payFee(
+                configurator.feeToken(),
+                msg.sender,
+                address(this),
+                configurator.artworkCopyFee() * amount
+            );
 
-        _payFee(
-            copyright.getRoyaltyToken(ActionType.Copy, tokenId),
-            msg.sender,
-            address(this),
-            copyright.getRoyaltyAmount(ActionType.Copy, tokenId, amount)
-        );
+            _payFee(
+                copyright.getRoyaltyToken(ActionType.Copy, tokenId),
+                msg.sender,
+                address(this),
+                copyright.getRoyaltyAmount(ActionType.Copy, tokenId, amount)
+            );
 
-        artwork.copy(msg.sender, tokenId, amount);
+            artwork.copy(msg.sender, tokenId, amount);
+        }
     }
 
     function waive(uint256 tokenId) external {
@@ -128,21 +134,23 @@ contract Canvas is ICanvas, ERC165, ERC721Receiver, ERC1155Receiver {
     }
 
     function burn(uint256 tokenId, uint256 amount) external {
-        _payFee(
-            configurator.feeToken(),
-            msg.sender,
-            address(this),
-            configurator.artworkBurnFee()
-        );
+        if (amount > 0) {
+            _payFee(
+                configurator.feeToken(),
+                msg.sender,
+                address(this),
+                configurator.artworkBurnFee()
+            );
 
-        _payFee(
-            copyright.getRoyaltyToken(ActionType.Burn, tokenId),
-            msg.sender,
-            address(this),
-            copyright.getRoyaltyAmount(ActionType.Burn, tokenId, amount)
-        );
+            _payFee(
+                copyright.getRoyaltyToken(ActionType.Burn, tokenId),
+                msg.sender,
+                address(this),
+                copyright.getRoyaltyAmount(ActionType.Burn, tokenId, amount)
+            );
 
-        artwork.burn(msg.sender, tokenId, amount);
+            artwork.burn(msg.sender, tokenId, amount);
+        }
     }
 
     function _createAndClaim(

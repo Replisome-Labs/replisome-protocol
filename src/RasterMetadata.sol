@@ -180,8 +180,8 @@ contract RasterMetadata is IMetadata, ERC165 {
             tree.init(boundary);
         }
 
-        for (uint256 i = 0; i < layers.length; i++) {
-            Layer memory layer = layers[i];
+        for (uint256 layerIndex = 0; layerIndex < layers.length; layerIndex++) {
+            Layer memory layer = layers[layerIndex];
             (IMetadata metadata, uint256 metadataId) = copyright.metadataOf(
                 layer.tokenId
             );
@@ -190,7 +190,7 @@ contract RasterMetadata is IMetadata, ERC165 {
                 revert UnsupportedMetadata(metadata);
             }
 
-            if (!exists(metadataId)) {
+            if (!metadata.exists(metadataId)) {
                 revert NotCreated(metadataId);
             }
 
@@ -199,8 +199,10 @@ contract RasterMetadata is IMetadata, ERC165 {
                 Quadtree.Node[] memory nodes
             ) = _parseLayerMetadata(metadata, metadataId);
 
-            for (uint256 j = 0; j < nodes.length; j++) {
-                tree.insert(_transformNode(layout, nodes[i], layer.transforms));
+            for (uint256 nodeIndex = 0; nodeIndex < nodes.length; nodeIndex++) {
+                tree.insert(
+                    _transformNode(layout, nodes[nodeIndex], layer.transforms)
+                );
             }
         }
 

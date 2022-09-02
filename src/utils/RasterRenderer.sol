@@ -78,7 +78,8 @@ library RasterRenderer {
         uint256 x = uint256(node.x) * _pixelSize;
         uint256 y = uint256(node.y) * _pixelSize;
         bytes3 c = bytes3(node.data);
-        uint256 o = uint256((uint8(node.data[3]) * 100) / type(uint8).max);
+        uint256 o = (uint256(uint8(uint32(node.data))) * 100) /
+            uint256(type(uint8).max);
         partialSVG = string(
             abi.encodePacked(
                 '<rect width="',
@@ -89,8 +90,8 @@ library RasterRenderer {
                 x.toString(),
                 '" y="',
                 y.toString(),
-                '" fill="',
-                c.toHexString(),
+                '" fill="#',
+                c.toColorString(),
                 '" fill-opacity="',
                 o.toString(),
                 '%" />'

@@ -11,7 +11,7 @@ import {ERC20} from "../src/libraries/ERC20.sol";
 import {ERC1155Receiver} from "../src/libraries/ERC1155Receiver.sol";
 import {MockCopyright} from "./mock/MockCopyright.sol";
 
-contract ContractTest is Test, ERC1155Receiver {
+contract ArtworkTest is Test, ERC1155Receiver {
     using stdStorage for StdStorage;
 
     event TransferSingle(

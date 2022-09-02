@@ -159,7 +159,7 @@ contract Artwork is IArtwork, ERC1155 {
 
         _consume(account, tokenId, amount);
         _mint(account, tokenId, amount, "");
-        ownedBalanceOf[account][tokenId]++;
+        ownedBalanceOf[account][tokenId] += amount;
     }
 
     function burn(
@@ -193,7 +193,7 @@ contract Artwork is IArtwork, ERC1155 {
 
         _burn(account, tokenId, amount);
         _recycle(account, tokenId, amount);
-        ownedBalanceOf[account][tokenId]--;
+        ownedBalanceOf[account][tokenId] -= amount;
     }
 
     function _consume(
