@@ -49,7 +49,7 @@ contract Canvas is ICanvas, ERC165, ERC721Receiver, ERC1155Receiver {
         IRule rule,
         IMetadata metadata,
         bytes calldata drawings
-    ) external {
+    ) external returns (uint256 tokenId) {
         _payFee(
             configurator.feeToken(),
             msg.sender,
@@ -59,7 +59,7 @@ contract Canvas is ICanvas, ERC165, ERC721Receiver, ERC1155Receiver {
         );
 
         Layer[] memory layers = new Layer[](0);
-        uint256 tokenId = _createAndClaim(rule, metadata, layers, drawings);
+        tokenId = _createAndClaim(rule, metadata, layers, drawings);
 
         if (amount > 0) {
             _payFee(
@@ -79,7 +79,7 @@ contract Canvas is ICanvas, ERC165, ERC721Receiver, ERC1155Receiver {
         IMetadata metadata,
         Layer[] calldata layers,
         bytes calldata drawings
-    ) external {
+    ) external returns (uint256 tokenId) {
         _payFee(
             configurator.feeToken(),
             msg.sender,
@@ -88,7 +88,7 @@ contract Canvas is ICanvas, ERC165, ERC721Receiver, ERC1155Receiver {
                 (configurator.artworkCopyFee() * amount)
         );
 
-        uint256 tokenId = _createAndClaim(rule, metadata, layers, drawings);
+        tokenId = _createAndClaim(rule, metadata, layers, drawings);
 
         if (amount > 0) {
             _payFee(
@@ -162,7 +162,6 @@ contract Canvas is ICanvas, ERC165, ERC721Receiver, ERC1155Receiver {
         uint256 metadataId = metadata.create(layers, drawings);
         copyright.claim(msg.sender, rule, metadata, metadataId);
         tokenId = copyright.search(metadata, metadataId);
-        copyright.safeTransferFrom(address(this), msg.sender, tokenId);
     }
 
     function _payFee(

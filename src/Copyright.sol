@@ -75,10 +75,14 @@ contract Copyright is ICopyright, ERC721("HiggsPixel Copyright", "HPCR") {
         returns (string memory)
     {
         string memory name = string(
-            abi.encodePacked("HiggsPixel Copyright ", tokenId)
+            abi.encodePacked("HiggsPixel Copyright #", tokenId)
         );
         string memory description = string(
-            abi.encodePacked("Copyright ", tokenId, "is powered by HiggsPixel")
+            abi.encodePacked(
+                "Copyright #",
+                tokenId,
+                " is powered by HiggsPixel"
+            )
         );
         ICopyrightRenderer renderer = configurator.copyrightRenderer();
         CopyrightDescriptor.TokenURIParams memory params = CopyrightDescriptor

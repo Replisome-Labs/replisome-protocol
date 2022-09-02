@@ -13,10 +13,12 @@ import {IERC20} from "./interfaces/IERC20.sol";
 import {IERC2981} from "./interfaces/IERC2981.sol";
 import {ERC1155} from "./libraries/ERC1155.sol";
 import {SafeERC20} from "./libraries/SafeERC20.sol";
+import {Strings} from "./libraries/Strings.sol";
 import {ArtworkDescriptor} from "./utils/ArtworkDescriptor.sol";
 
 contract Artwork is IArtwork, ERC1155 {
     using SafeERC20 for IERC20;
+    using Strings for uint256;
 
     IConfigurator public immutable configurator;
 
@@ -65,10 +67,14 @@ contract Artwork is IArtwork, ERC1155 {
         returns (string memory)
     {
         string memory name = string(
-            abi.encodePacked("HiggsPixel Artwork ", tokenId)
+            abi.encodePacked("HiggsPixel Artwork #", tokenId.toString())
         );
         string memory description = string(
-            abi.encodePacked("Artwork ", tokenId, "is powered by HiggsPixel")
+            abi.encodePacked(
+                "Artwork #",
+                tokenId.toString(),
+                " is powered by HiggsPixel"
+            )
         );
         (IMetadata metadata, uint256 metadataId) = copyright.metadataOf(
             tokenId
