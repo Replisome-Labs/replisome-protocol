@@ -16,6 +16,8 @@ import {Layer, TransformParam} from "../src/interfaces/Structs.sol";
 contract CanvasTest is Test, ERC1155Receiver, ERC721Receiver {
     using stdStorage for StdStorage;
 
+    uint256 public constant ZERO = uint256(0);
+
     Canvas public canvas;
     Configurator public configurator;
     MetadataRegistry public metadataRegistry;
@@ -59,6 +61,28 @@ contract CanvasTest is Test, ERC1155Receiver, ERC721Receiver {
 
         assertEq(copyright.balanceOf(address(this)), 1);
         assertEq(artwork.balanceOf(address(this), 1), 1);
+    }
+
+    function testCreateComplicateArtwork() public {
+        bytes memory drawings;
+        for (uint256 i = 0; i < 16; i++) {
+            bytes memory node = abi.encodePacked(
+                uint32(i),
+                uint32(i),
+                uint32(1),
+                uint32(ZERO),
+                uint32(ZERO),
+                uint32(ZERO),
+                uint32(ZERO),
+                uint8(ZERO),
+                uint8(ZERO),
+                uint8(ZERO),
+                type(uint8).max
+            );
+            drawings = abi.encodePacked(drawings, node);
+        }
+
+        canvas.create(1, rule, metadata, drawings);
     }
 
     function testCompose() public {
