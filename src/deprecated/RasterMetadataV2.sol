@@ -1,15 +1,14 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.13;
 
-import {Layer, TransformParam, TransformType} from "./interfaces/Structs.sol";
-import {ICopyright} from "./interfaces/ICopyright.sol";
-import {IMetadata} from "./interfaces/IMetadata.sol";
-import {IERC165} from "./interfaces/IERC165.sol";
-import {ERC165} from "./libraries/ERC165.sol";
-import {SafeCast} from "./libraries/SafeCast.sol";
-import {BytesLib} from "./libraries/BytesLib.sol";
-import {BoardLib} from "./utils/BoardLib.sol";
-import {RasterRenderer} from "./utils/RasterRenderer.sol";
+import {Layer, TransformParam, TransformType} from "../interfaces/Structs.sol";
+import {ICopyright} from "../interfaces/ICopyright.sol";
+import {IMetadata} from "../interfaces/IMetadata.sol";
+import {IERC165} from "../interfaces/IERC165.sol";
+import {ERC165} from "../libraries/ERC165.sol";
+import {SafeCast} from "../libraries/SafeCast.sol";
+import {RasterRendererV2} from "./RasterRendererV2.sol";
+import {Grid} from "./Grid.sol";
 
 error UnsupportedMetadata(IMetadata metadata);
 
@@ -26,14 +25,8 @@ struct LayerLayout {
     uint256 y2;
 }
 
-struct LayerCell {
-    uint256 x;
-    uint256 y;
-}
-
-contract RasterMetadata is IMetadata, ERC165 {
-    using BytesLib for bytes;
-    using BoardLib for BoardLib.Board;
+contract RasterMetadataV2 is IMetadata, ERC165 {
+    using Grid for Grid.Board;
 
     ICopyright public immutable copyright;
     uint256 public width;
@@ -41,11 +34,8 @@ contract RasterMetadata is IMetadata, ERC165 {
 
     uint256 totalSupply;
 
-    // EMPTY_BOARD should be immutable but bytes type have not been supported for now.
-    bytes public EMPTY_BOARD;
-
     // mapping from metadataId to tree
-    mapping(uint256 => BoardLib.Board) internal _contentOf;
+    mapping(uint256 => Grid.Board) internal _contentOf;
 
     // mapping from metadataId to ingredients
     mapping(uint256 => uint256[]) internal _ingredientsOf;
@@ -68,7 +58,6 @@ contract RasterMetadata is IMetadata, ERC165 {
         copyright = copyright_;
         width = width_;
         height = height_;
-        EMPTY_BOARD = new bytes(width_ * height + 1);
     }
 
     function supportsInterface(bytes4 interfaceId)
@@ -88,14 +77,16 @@ contract RasterMetadata is IMetadata, ERC165 {
         view
         returns (string memory svg)
     {
-        BoardLib.Board storage board = _contentOf[metadataId];
-        RasterRenderer.SVGParams memory params = RasterRenderer.SVGParams({
+        Grid.Board storage board = _contentOf[metadataId];
+        Grid.Point[] memory points = board.points;
+        bytes32[] memory values = board.getValues();
+        RasterRendererV2.SVGParams memory params = RasterRendererV2.SVGParams({
             width: width,
             height: height,
-            colors: board.getColors(),
-            data: board.data
+            points: points,
+            values: values
         });
-        svg = RasterRenderer.generateSVG(params);
+        svg = RasterRendererV2.generateSVG(params);
     }
 
     function readRawData(uint256 metadataId)
@@ -103,8 +94,19 @@ contract RasterMetadata is IMetadata, ERC165 {
         view
         returns (bytes memory raw)
     {
-        BoardLib.Board storage board = _contentOf[metadataId];
-        raw = board.toBytes();
+        Grid.Board storage board = _contentOf[metadataId];
+        Grid.Point[] memory points = board.points;
+        unchecked {
+            for (uint256 i = 0; i < points.length; i++) {
+                Grid.Point memory point = points[i];
+                raw = abi.encodePacked(
+                    raw,
+                    point.x,
+                    point.y,
+                    board.pointValues[point.x][point.y]
+                );
+            }
+        }
     }
 
     function supportsMetadata(IMetadata metadata)
@@ -137,11 +139,14 @@ contract RasterMetadata is IMetadata, ERC165 {
         external
         returns (uint256 metadataId)
     {
-        BoardLib.Board storage board = _contentOf[0];
-        _buildBoard(board, layers, drawings);
-        bytes32 metadataHash = _calculateHash(board);
-        metadataId = _hashToId[metadataHash];
-        _clearBoard(board);
+        // (Grid.Point[] memory points, bytes32[] memory values) = _parseDrawings(
+        //     drawings
+        // );
+        // Grid.Board storage board = _contentOf[0];
+        // _buildBoard(board, layers, points, values);
+        // bytes32 metadataHash = _calculateHash(board);
+        // metadataId = _hashToId[metadataHash];
+        // _clearBoard(board);
     }
 
     function create(Layer[] calldata layers, bytes calldata drawings)
@@ -152,7 +157,12 @@ contract RasterMetadata is IMetadata, ERC165 {
 
         _saveLayersComposition(metadataId, layers);
 
-        BoardLib.Board storage board = _contentOf[metadataId];
+        // (Grid.Point[] memory points, bytes32[] memory values) = _parseDrawings(
+        //     drawings
+        // );
+
+        Grid.Board storage board = _contentOf[metadataId];
+        // _buildBoard(board, layers, points, values);
         _buildBoard(board, layers, drawings);
 
         bytes32 metadataHash = _calculateHash(board);
@@ -166,17 +176,10 @@ contract RasterMetadata is IMetadata, ERC165 {
     }
 
     function _buildBoard(
-        BoardLib.Board storage board,
+        Grid.Board storage board,
         Layer[] memory layers,
-        bytes calldata drawings
+        bytes calldata drawings // Grid.Point[] memory points, // bytes32[] memory values
     ) internal {
-        if (layers.length == 0) {
-            board.fromBytes(drawings);
-            return;
-        }
-
-        _addBaseLayer(board);
-
         for (uint256 layerIndex = 0; layerIndex < layers.length; layerIndex++) {
             Layer memory layer = layers[layerIndex];
             (IMetadata metadata, uint256 metadataId) = copyright.metadataOf(
@@ -192,17 +195,42 @@ contract RasterMetadata is IMetadata, ERC165 {
             }
 
             (
-                LayerLayout memory layerLayout,
-                bytes memory layerRaw
+                LayerLayout memory layout,
+                Grid.Point[] memory layerPoints,
+                bytes32[] memory layerPointValues
             ) = _parseLayerMetadata(metadata, metadataId);
 
-            _addLayer(board, layerRaw, layerLayout, layer.transforms);
+            for (
+                uint256 layerPointIndex = 0;
+                layerPointIndex < layerPoints.length;
+                layerPointIndex++
+            ) {
+                board.insert(
+                    _transformPoint(
+                        layerPoints[layerPointIndex],
+                        layout,
+                        layer.transforms
+                    ),
+                    layerPointValues[layerPointIndex]
+                );
+            }
         }
 
-        _addLayer(board, drawings);
+        // for (uint256 pointIndex = 0; pointIndex < points.length; pointIndex++) {
+        //     board.insert(points[pointIndex], values[pointIndex]);
+        // }
+        for (uint256 k = 0; k < drawings.length; k += 96) {
+            board.insert(
+                Grid.Point({
+                    x: uint256(bytes32(drawings[k:k + 32])),
+                    y: uint256(bytes32(drawings[k + 32:k + 64]))
+                }),
+                bytes32(drawings[k + 64:k + 96])
+            );
+        }
     }
 
-    function _clearBoard(BoardLib.Board storage board) internal {
+    function _clearBoard(Grid.Board storage board) internal {
         board.clear();
     }
 
@@ -218,155 +246,127 @@ contract RasterMetadata is IMetadata, ERC165 {
         }
     }
 
+    function _parseDrawings(bytes calldata drawings)
+        internal
+        pure
+        returns (Grid.Point[] memory points, bytes32[] memory values)
+    {
+        points = new Grid.Point[](drawings.length / 96);
+        values = new bytes32[](drawings.length / 96);
+        uint256 i = 0;
+        for (uint256 k = 0; k < drawings.length; k += 96) {
+            points[i] = Grid.Point({
+                x: uint256(bytes32(drawings[k:k + 32])),
+                y: uint256(bytes32(drawings[k + 32:k + 64]))
+            });
+            values[i] = bytes32(drawings[k + 64:k + 96]);
+            i++;
+        }
+    }
+
     function _parseLayerMetadata(IMetadata metadata, uint256 metadataId)
         internal
         view
-        returns (LayerLayout memory layerLayout, bytes memory layerRaw)
+        returns (
+            LayerLayout memory layout,
+            Grid.Point[] memory layerPoints,
+            bytes32[] memory layerPointValues
+        )
     {
         if (address(metadata) == address(this)) {
-            layerLayout = LayerLayout({
+            layout = LayerLayout({
                 x1: 0,
                 y1: 0,
                 x2: metadata.width() - 1,
                 y2: metadata.height() - 1
             });
 
-            BoardLib.Board storage board = _contentOf[metadataId];
-            layerRaw = board.toBytes();
+            Grid.Board storage board = _contentOf[metadataId];
+            layerPoints = board.points;
+            layerPointValues = board.getValues();
         }
     }
 
-    function _calculateHash(BoardLib.Board storage board)
+    function _calculateHash(Grid.Board storage board)
         internal
         view
         returns (bytes32 metadataHash)
     {
-        bytes memory raw = board.toBytes();
+        bytes memory raw;
+        unchecked {
+            for (uint256 x = 0; x < width; x++) {
+                for (uint256 y = 0; y < height; y++) {
+                    bytes32 data = board.at(Grid.Point(x, y));
+                    raw = abi.encodePacked(raw, bytes4(data));
+                }
+            }
+        }
         metadataHash = keccak256(raw);
     }
 
-    function _addBaseLayer(BoardLib.Board storage board) internal {
-        board.fromBytes(EMPTY_BOARD);
-    }
-
-    function _addLayer(BoardLib.Board storage board, bytes calldata raw)
-        internal
-    {
-        uint8 rawColorCount = uint8(raw[0]);
-        bytes4[] memory rawColors = new bytes4[](rawColorCount);
-        unchecked {
-            for (uint8 i = 0; i < rawColorCount; i++) {
-                rawColors[i] = bytes4(raw[i * 4 + 1:i * 4 + 5]);
-            }
-        }
-
-        bytes memory rawData = raw[rawColorCount * 4 + 1:];
-        unchecked {
-            for (uint256 j = 0; j < rawData.length; j++) {
-                uint8 rawColorIndex = uint8(rawData[j]);
-                if (rawColorIndex == uint8(0)) continue;
-                bytes4 color = rawColors[rawColorIndex - 1];
-                board.fillColor(j, color);
-            }
-        }
-    }
-
-    function _addLayer(
-        BoardLib.Board storage board,
-        bytes memory raw,
+    function _transformPoint(
+        Grid.Point memory point,
         LayerLayout memory layout,
         TransformParam[] memory transforms
-    ) internal {
-        uint8 rawColorCount = uint8(raw[0]);
-        bytes4[] memory rawColors = new bytes4[](rawColorCount);
-        unchecked {
-            for (uint8 i = 0; i < rawColorCount; i++) {
-                rawColors[i] = bytes4(raw.slice(i * 4 + 1, 4));
-            }
-        }
-
-        uint256 rawDataStart = rawColorCount * 4 + 1;
-        bytes memory rawData = raw.slice(
-            rawDataStart,
-            raw.length - rawDataStart
-        );
-        unchecked {
-            for (uint256 j = 0; j < rawData.length; j++) {
-                uint8 rawColorIndex = uint8(rawData[j]);
-                if (rawColorIndex == uint8(0)) continue;
-                bytes4 color = rawColors[rawColorIndex - 1];
-                uint256 position = _transformCell(j, layout, transforms);
-                board.fillColor(position, color);
-            }
-        }
-    }
-
-    function _transformCell(
-        uint256 position,
-        LayerLayout memory layout,
-        TransformParam[] memory transforms
-    ) internal view returns (uint256 newPosition) {
-        LayerCell memory cell;
-        cell.y = position / width;
-        cell.x = position - (width * cell.y);
-
-        LayerLayout memory localLayout;
-        localLayout.x1 = layout.x1;
-        localLayout.y1 = layout.y1;
-        localLayout.x2 = layout.x2;
-        localLayout.y2 = layout.y2;
+    ) internal view returns (Grid.Point memory newPoint) {
+        newPoint.x = point.x;
+        newPoint.y = point.y;
+        LayerLayout memory copiedLayout = LayerLayout({
+            x1: layout.x1,
+            y1: layout.y1,
+            x2: layout.x2,
+            y2: layout.y2
+        });
 
         for (uint256 i = 0; i < transforms.length; i++) {
             TransformType transformType = transforms[i].transformType;
             uint256 value = transforms[i].value;
             if (transformType == TransformType.TranslateX) {
-                _translateXCell(cell, localLayout, value);
+                _translateXPoint(newPoint, copiedLayout, value);
             } else if (transformType == TransformType.TranslateY) {
-                _translateYCell(cell, localLayout, value);
+                _translateYPoint(newPoint, copiedLayout, value);
             } else if (transformType == TransformType.Rotate) {
-                _rotateCell(cell, localLayout, value);
+                _rotatePoint(newPoint, copiedLayout, value);
             } else if (transformType == TransformType.Flip) {
-                _flipCell(cell, localLayout, value);
+                _flipPoint(newPoint, copiedLayout, value);
             }
         }
-
-        newPosition = cell.y * width + cell.x;
     }
 
-    function _translateXCell(
-        LayerCell memory cel,
+    function _translateXPoint(
+        Grid.Point memory point,
         LayerLayout memory layout,
         uint256 value
     ) internal view {
-        cel.x += value;
+        point.x += value;
         layout.x1 += value;
         layout.x2 += value;
-        if (cel.x > width) {
+        if (point.x > width) {
             revert OutOfBoundary();
         }
     }
 
-    function _translateYCell(
-        LayerCell memory cell,
+    function _translateYPoint(
+        Grid.Point memory point,
         LayerLayout memory layout,
         uint256 value
     ) internal view {
-        cell.y += value;
+        point.y += value;
         layout.y1 += value;
         layout.y2 += value;
-        if (cell.y > height) {
+        if (point.y > height) {
             revert OutOfBoundary();
         }
     }
 
     /**
-        @dev Rotate a cell given on layout
+        @dev Rotate a point given on layout
         Rotate clockwise 90 degree if value equals to 1.
         Rotate clockwise 180 degree if value equals to 2.
         Rotate clockwise 270 degree if value equals to 2.
      */
-    function _rotateCell(
-        LayerCell memory cell,
+    function _rotatePoint(
+        Grid.Point memory point,
         LayerLayout memory layout,
         uint256 value
     ) internal pure {
@@ -375,31 +375,31 @@ contract RasterMetadata is IMetadata, ERC165 {
         layout.x2 = layout.x1 + h - 1;
         layout.y2 = layout.y1 + w - 1;
         if (value == 1) {
-            cell.x = layout.x1 + layout.y2 - cell.y + 1;
-            cell.y = layout.y1 - layout.x1 + cell.x;
+            point.x = layout.x1 + layout.y2 - point.y + 1;
+            point.y = layout.y1 - layout.x1 + point.x;
         } else if (value == 2) {
-            cell.x = layout.x1 + layout.x2 - cell.x + 1;
-            cell.y = layout.y1 + layout.y2 - cell.y + 1;
+            point.x = layout.x1 + layout.x2 - point.x + 1;
+            point.y = layout.y1 + layout.y2 - point.y + 1;
         } else if (value == 3) {
-            cell.x = layout.x1 - layout.y1 + cell.y;
-            cell.y = layout.x2 + layout.y1 - cell.x + 1;
+            point.x = layout.x1 - layout.y1 + point.y;
+            point.y = layout.x2 + layout.y1 - point.x + 1;
         }
     }
 
     /**
-        @dev Flip a cell given on layout
+        @dev Flip a point given on layout
         Flip horizontally if value equals to 1.
         Flip vertically if value equals to 2.
      */
-    function _flipCell(
-        LayerCell memory cell,
+    function _flipPoint(
+        Grid.Point memory point,
         LayerLayout memory layout,
         uint256 value
     ) internal pure {
         if (value == 1) {
-            cell.x = layout.x1 + layout.x2 - cell.x;
+            point.x = layout.x1 + layout.x2 - point.x;
         } else if (value == 2) {
-            cell.y = layout.y1 + layout.y2 - cell.y;
+            point.y = layout.y1 + layout.y2 - point.y;
         }
     }
 }

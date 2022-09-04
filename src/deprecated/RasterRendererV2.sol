@@ -3,16 +3,17 @@ pragma solidity ^0.8.13;
 
 import {Base64} from "../libraries/Base64.sol";
 import {Strings} from "../libraries/Strings.sol";
+import {Grid} from "./Grid.sol";
 
-library RasterRenderer {
+library RasterRendererV2 {
     using Strings for uint256;
     using Strings for bytes3;
 
     struct SVGParams {
         uint256 width;
         uint256 height;
-        bytes4[] colors;
-        bytes data;
+        Grid.Point[] points;
+        bytes32[] values;
     }
 
     uint256 private constant _pixelSize = 10;
@@ -61,28 +62,24 @@ library RasterRenderer {
     {
         string memory rects;
 
-        for (uint256 i = 0; i < params.data.length; i++) {
-            uint256 y = i / params.width;
-            uint256 x = i - (params.width * y);
-            uint8 colorIndex = uint8(params.data[i]);
-            if (colorIndex == uint8(0)) continue;
-            bytes4 color = params.colors[colorIndex - 1];
-            string memory rect = _getRect(x, y, color);
+        for (uint256 i = 0; i < params.points.length; i++) {
+            string memory rect = _getRect(params.points[i], params.values[i]);
             rects = string(abi.encodePacked(rects, rect));
         }
 
         partialSVG = string(abi.encodePacked("<g>", rects, "</g>"));
     }
 
-    function _getRect(
-        uint256 x,
-        uint256 y,
-        bytes4 value
-    ) private pure returns (string memory partialSVG) {
-        uint256 rectX = uint256(x) * _pixelSize;
-        uint256 rectY = uint256(y) * _pixelSize;
-        bytes3 c = bytes3(value);
-        uint256 o = (uint256(uint8(uint32(value))) * 100) /
+    function _getRect(Grid.Point memory point, bytes32 value)
+        private
+        pure
+        returns (string memory partialSVG)
+    {
+        uint256 x = uint256(point.x) * _pixelSize;
+        uint256 y = uint256(point.y) * _pixelSize;
+        bytes4 v = bytes4(value);
+        bytes3 c = bytes3(v);
+        uint256 o = (uint256(uint8(uint32(v))) * 100) /
             uint256(type(uint8).max);
         partialSVG = string(
             abi.encodePacked(
@@ -91,9 +88,9 @@ library RasterRenderer {
                 '" height="',
                 _pixelSize.toString(),
                 '" x="',
-                rectX.toString(),
+                x.toString(),
                 '" y="',
-                rectY.toString(),
+                y.toString(),
                 '" fill="#',
                 c.toColorString(),
                 '" fill-opacity="',

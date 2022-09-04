@@ -2,47 +2,44 @@
 pragma solidity ^0.8.13;
 
 import "forge-std/Test.sol";
-import {RasterMetadata} from "../src/RasterMetadata.sol";
-import {Property, Layer, TransformParam} from "../src/interfaces/Structs.sol";
-import {IRule} from "../src/interfaces/IRule.sol";
-import {MockCopyright} from "./mock/MockCopyright.sol";
+import {RasterMetadataV1} from "./RasterMetadataV1.sol";
+import {Property, Layer, TransformParam} from "../interfaces/Structs.sol";
+import {IRule} from "../interfaces/IRule.sol";
+import {MockCopyright} from "../../test/mock/MockCopyright.sol";
 
-contract RasterMetadataTest is Test {
+contract RasterMetadataV1Test is Test {
     using stdStorage for StdStorage;
 
     event Created(uint256 indexed metadataId);
 
     MockCopyright public copyright;
-    RasterMetadata public metadata;
+    RasterMetadataV1 public metadata;
 
     function setUp() public {
         copyright = new MockCopyright();
-        metadata = new RasterMetadata(copyright, 16, 16);
+        metadata = new RasterMetadataV1(copyright, 16, 16, 16);
     }
 
     function testCreatWithoutLayers() public {
         Layer[] memory layers = new Layer[](0);
         bytes memory drawings = abi.encodePacked(
-            uint8(1),
+            uint32(0),
+            uint32(0),
+            uint32(1),
+            uint32(0),
+            uint32(0),
+            uint32(0),
+            uint32(0),
             uint8(0),
             uint8(0),
             uint8(0),
             type(uint8).max
         );
-        for (uint256 i = 0; i < 256; i++) {
-            if (i == 0 || i == 20 || i == 30) {
-                drawings = abi.encodePacked(drawings, uint8(1));
-            } else {
-                drawings = abi.encodePacked(drawings, uint8(0));
-            }
-        }
-
         vm.expectEmit(true, false, false, false);
         emit Created(1);
 
         uint256 id = metadata.create(layers, drawings);
 
-        emit log_bytes(metadata.readRawData(id));
         emit log(metadata.generateSVG(id));
     }
 
@@ -51,45 +48,42 @@ contract RasterMetadataTest is Test {
         Layer[] memory layers = new Layer[](1);
         layers[0] = Layer({tokenId: 1, transforms: new TransformParam[](0)});
         bytes memory drawings = abi.encodePacked(
-            uint8(1),
+            uint32(0),
+            uint32(0),
+            uint32(1),
+            uint32(0),
+            uint32(0),
+            uint32(0),
+            uint32(0),
             uint8(0),
             uint8(0),
             type(uint8).max,
             type(uint8).max
         );
-        for (uint256 i = 0; i < 256; i++) {
-            if (i == 10) {
-                drawings = abi.encodePacked(drawings, uint8(1));
-            } else {
-                drawings = abi.encodePacked(drawings, uint8(0));
-            }
-        }
 
         vm.expectEmit(true, false, false, false);
         emit Created(2);
 
         uint256 id = metadata.create(layers, drawings);
 
-        emit log_bytes(metadata.readRawData(id));
         emit log(metadata.generateSVG(id));
     }
 
     function mockLayer() public {
         Layer[] memory layers = new Layer[](0);
         bytes memory drawings = abi.encodePacked(
-            uint8(1),
+            uint32(8),
+            uint32(8),
+            uint32(1),
+            uint32(0),
+            uint32(0),
+            uint32(0),
+            uint32(0),
             uint8(0),
-            uint8(0),
+            type(uint8).max,
             uint8(0),
             type(uint8).max
         );
-        for (uint256 i = 0; i < 256; i++) {
-            if (i == 0) {
-                drawings = abi.encodePacked(drawings, uint8(1));
-            } else {
-                drawings = abi.encodePacked(drawings, uint8(0));
-            }
-        }
 
         uint256 id = metadata.create(layers, drawings);
 

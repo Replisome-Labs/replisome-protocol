@@ -39,7 +39,7 @@ contract DeployRasterMetadata is Script {
 
         vm.startBroadcast();
 
-        RasterMetadata metadata = new RasterMetadata(copyright, 16, 16, 16);
+        RasterMetadata metadata = new RasterMetadata(copyright, 16, 16);
         registry.register(metadata);
 
         vm.stopBroadcast();

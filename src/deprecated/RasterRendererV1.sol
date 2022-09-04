@@ -3,16 +3,16 @@ pragma solidity ^0.8.13;
 
 import {Base64} from "../libraries/Base64.sol";
 import {Strings} from "../libraries/Strings.sol";
+import {Quadtree} from "./Quadtree.sol";
 
-library RasterRenderer {
+library RasterRendererV1 {
     using Strings for uint256;
     using Strings for bytes3;
 
     struct SVGParams {
         uint256 width;
         uint256 height;
-        bytes4[] colors;
-        bytes data;
+        Quadtree.Node[] nodes;
     }
 
     uint256 private constant _pixelSize = 10;
@@ -61,39 +61,35 @@ library RasterRenderer {
     {
         string memory rects;
 
-        for (uint256 i = 0; i < params.data.length; i++) {
-            uint256 y = i / params.width;
-            uint256 x = i - (params.width * y);
-            uint8 colorIndex = uint8(params.data[i]);
-            if (colorIndex == uint8(0)) continue;
-            bytes4 color = params.colors[colorIndex - 1];
-            string memory rect = _getRect(x, y, color);
+        for (uint256 i = 0; i < params.nodes.length; i++) {
+            string memory rect = _getRect(params.nodes[i]);
             rects = string(abi.encodePacked(rects, rect));
         }
 
         partialSVG = string(abi.encodePacked("<g>", rects, "</g>"));
     }
 
-    function _getRect(
-        uint256 x,
-        uint256 y,
-        bytes4 value
-    ) private pure returns (string memory partialSVG) {
-        uint256 rectX = uint256(x) * _pixelSize;
-        uint256 rectY = uint256(y) * _pixelSize;
-        bytes3 c = bytes3(value);
-        uint256 o = (uint256(uint8(uint32(value))) * 100) /
+    function _getRect(Quadtree.Node memory node)
+        private
+        pure
+        returns (string memory partialSVG)
+    {
+        uint256 l = uint256(node.l) * _pixelSize;
+        uint256 x = uint256(node.x) * _pixelSize;
+        uint256 y = uint256(node.y) * _pixelSize;
+        bytes3 c = bytes3(node.data);
+        uint256 o = (uint256(uint8(uint32(node.data))) * 100) /
             uint256(type(uint8).max);
         partialSVG = string(
             abi.encodePacked(
                 '<rect width="',
-                _pixelSize.toString(),
+                l.toString(),
                 '" height="',
-                _pixelSize.toString(),
+                l.toString(),
                 '" x="',
-                rectX.toString(),
+                x.toString(),
                 '" y="',
-                rectY.toString(),
+                y.toString(),
                 '" fill="#',
                 c.toColorString(),
                 '" fill-opacity="',

@@ -32,7 +32,7 @@ contract CanvasTest is Test, ERC1155Receiver, ERC721Receiver {
         copyright = new Copyright(configurator, metadataRegistry);
         artwork = new Artwork(configurator, copyright);
         canvas = new Canvas(configurator, copyright, artwork);
-        metadata = new RasterMetadata(copyright, 16, 16, 16);
+        metadata = new RasterMetadata(copyright, 16, 16);
         rule = new CC0Rule();
 
         metadataRegistry.register(metadata);
@@ -42,18 +42,19 @@ contract CanvasTest is Test, ERC1155Receiver, ERC721Receiver {
 
     function testCreate() public {
         bytes memory drawings = abi.encodePacked(
-            uint32(0),
-            uint32(0),
-            uint32(1),
-            uint32(0),
-            uint32(0),
-            uint32(0),
-            uint32(0),
+            uint8(1),
             uint8(0),
             uint8(0),
             uint8(0),
             type(uint8).max
         );
+        for (uint256 i = 0; i < 256; i++) {
+            if (i == 0 || i == 20 || i == 30) {
+                drawings = abi.encodePacked(drawings, uint8(1));
+            } else {
+                drawings = abi.encodePacked(drawings, uint8(0));
+            }
+        }
 
         canvas.create(1, rule, metadata, drawings);
 
@@ -63,42 +64,21 @@ contract CanvasTest is Test, ERC1155Receiver, ERC721Receiver {
         assertEq(artwork.balanceOf(address(this), 1), 1);
     }
 
-    function testCreateComplicateArtwork() public {
-        bytes memory drawings;
-        for (uint256 i = 0; i < 16; i++) {
-            bytes memory node = abi.encodePacked(
-                uint32(i),
-                uint32(i),
-                uint32(1),
-                uint32(ZERO),
-                uint32(ZERO),
-                uint32(ZERO),
-                uint32(ZERO),
-                uint8(ZERO),
-                uint8(ZERO),
-                uint8(ZERO),
-                type(uint8).max
-            );
-            drawings = abi.encodePacked(drawings, node);
-        }
-
-        canvas.create(1, rule, metadata, drawings);
-    }
-
     function testCompose() public {
         bytes memory drawings1 = abi.encodePacked(
-            uint32(0),
-            uint32(0),
-            uint32(1),
-            uint32(0),
-            uint32(0),
-            uint32(0),
-            uint32(0),
+            uint8(1),
             uint8(0),
             uint8(0),
-            type(uint8).max,
+            uint8(0),
             type(uint8).max
         );
+        for (uint256 i = 0; i < 256; i++) {
+            if (i == 0 || i == 20 || i == 30) {
+                drawings1 = abi.encodePacked(drawings1, uint8(1));
+            } else {
+                drawings1 = abi.encodePacked(drawings1, uint8(0));
+            }
+        }
 
         uint256 token1Id = canvas.create(2, rule, metadata, drawings1);
 
@@ -108,18 +88,19 @@ contract CanvasTest is Test, ERC1155Receiver, ERC721Receiver {
             transforms: new TransformParam[](0)
         });
         bytes memory drawings2 = abi.encodePacked(
-            uint32(8),
-            uint32(8),
-            uint32(1),
-            uint32(0),
-            uint32(0),
-            uint32(0),
-            uint32(0),
+            uint8(1),
             uint8(0),
-            type(uint8).max,
-            type(uint8).max,
+            uint8(0),
+            uint8(0),
             type(uint8).max
         );
+        for (uint256 i = 0; i < 256; i++) {
+            if (i == 10 || i == 100 || i == 130) {
+                drawings2 = abi.encodePacked(drawings2, uint8(1));
+            } else {
+                drawings2 = abi.encodePacked(drawings2, uint8(0));
+            }
+        }
         uint256 token2Id = canvas.compose(1, rule, metadata, layers, drawings2);
 
         assertEq(copyright.balanceOf(address(this)), 2);
