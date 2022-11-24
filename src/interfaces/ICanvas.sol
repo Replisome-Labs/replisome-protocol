@@ -22,16 +22,10 @@ interface ICanvas is IERC165, IERC721Receiver, IERC1155Receiver {
         uint256 amount,
         IRule rule,
         IMetadata metadata,
-        bytes calldata drawings
-    ) external returns (uint256 tokenId);
-
-    function compose(
-        uint256 amount,
-        IRule rule,
-        IMetadata metadata,
-        Layer[] calldata layers,
-        bytes calldata drawings
-    ) external returns (uint256 tokenId);
+        bytes calldata data
+    )
+        external
+        returns (uint256 tokenId);
 
     function copy(uint256 tokenId, uint256 amount) external;
 

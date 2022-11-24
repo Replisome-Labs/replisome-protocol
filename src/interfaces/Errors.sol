@@ -66,3 +66,22 @@ error AlreadyRegisteredMetadata(IMetadata metadata);
 error NotRegisteredMetadata(IMetadata metadata);
 
 error InexistenceMetadata(IMetadata metadata, uint256 metadataId);
+
+error UnsupportedMetadata(IMetadata metadata);
+
+error AlreadyCreated(uint256 metadataId);
+
+error LayerNotExisted(Layer layer);
+
+error LayerOutOfBoundary(Layer layer);
+
+error InvalidDrawing(bytes drawing);
+
+// Other
+error FrameSizeMistatch();
+
+error FrameSizeOverflow();
+
+error FrameOutOfBoundary();
+
+error ColorNotFound(bytes4 color);

@@ -7,16 +7,12 @@ import {IERC165} from "./IERC165.sol";
 interface IMetadata is IERC165 {
     event Created(uint256 indexed metadataId);
 
-    function width() external view returns (uint256 w);
-
-    function height() external view returns (uint256 h);
-
     function generateSVG(uint256 metadataId)
         external
         view
         returns (string memory svg);
 
-    function readRawData(uint256 metadataId)
+    function generateRawData(uint256 metadataId)
         external
         view
         returns (bytes memory raw);
@@ -28,16 +24,20 @@ interface IMetadata is IERC165 {
 
     function exists(uint256 metadataId) external view returns (bool ok);
 
+    function width(uint256 metadataId) external view returns (uint256 w);
+
+    function height(uint256 metadataId) external view returns (uint256 h);
+
     function getIngredients(uint256 metadataId)
         external
         view
         returns (uint256[] memory ids, uint256[] memory amounts);
 
-    function verify(Layer[] calldata layers, bytes calldata drawings)
+    function verify(bytes calldata data)
         external
         returns (uint256 metadataId);
 
-    function create(Layer[] calldata layers, bytes calldata drawings)
+    function create(bytes calldata data)
         external
         returns (uint256 metadataId);
 }

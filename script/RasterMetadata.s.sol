@@ -13,44 +13,28 @@ contract DeployRasterMetadata is Script {
     function run() public {
         string memory metadataRegistryAddress = vm.readFile(
             string(
-                abi.encodePacked(
-                    "./data/",
-                    vm.toString(block.chainid),
-                    "/MetadataRegistry"
-                )
+                abi.encodePacked("./data/", vm.toString(block.chainid), "/MetadataRegistry")
             )
         );
         string memory copyrightAddress = vm.readFile(
-            string(
-                abi.encodePacked(
-                    "./data/",
-                    vm.toString(block.chainid),
-                    "/Copyright"
-                )
-            )
+            string(abi.encodePacked("./data/", vm.toString(block.chainid), "/Copyright"))
         );
 
-        IMetadataRegistry registry = IMetadataRegistry(
-            DeployHelper.parseAddress(metadataRegistryAddress)
-        );
-        ICopyright copyright = ICopyright(
-            DeployHelper.parseAddress(copyrightAddress)
-        );
+        IMetadataRegistry registry =
+            IMetadataRegistry(DeployHelper.parseAddress(metadataRegistryAddress));
+        ICopyright copyright =
+            ICopyright(DeployHelper.parseAddress(copyrightAddress));
 
         vm.startBroadcast();
 
-        RasterMetadata metadata = new RasterMetadata(copyright, 16, 16);
+        RasterMetadata metadata = new RasterMetadata(copyright);
         registry.register(metadata);
 
         vm.stopBroadcast();
 
         vm.writeFile(
             string(
-                abi.encodePacked(
-                    "./data/",
-                    vm.toString(block.chainid),
-                    "/RasterMetadata16x16"
-                )
+                abi.encodePacked("./data/", vm.toString(block.chainid), "/RasterMetadata16x16")
             ),
             vm.toString(address(metadata))
         );

@@ -11,7 +11,7 @@ import {RasterMetadata} from "../src/RasterMetadata.sol";
 import {CC0Rule} from "../src/rules/CC0Rule.sol";
 import {ERC1155Receiver} from "../src/libraries/ERC1155Receiver.sol";
 import {ERC721Receiver} from "../src/libraries/ERC721Receiver.sol";
-import {Layer, TransformParam} from "../src/interfaces/Structs.sol";
+import {Layer, Rotate, Flip} from "../src/interfaces/Structs.sol";
 
 contract CanvasTest is Test, ERC1155Receiver, ERC721Receiver {
     using stdStorage for StdStorage;
@@ -32,7 +32,7 @@ contract CanvasTest is Test, ERC1155Receiver, ERC721Receiver {
         copyright = new Copyright(configurator, metadataRegistry);
         artwork = new Artwork(configurator, copyright);
         canvas = new Canvas(configurator, copyright, artwork);
-        metadata = new RasterMetadata(copyright, 16, 16);
+        metadata = new RasterMetadata(copyright);
         rule = new CC0Rule();
 
         metadataRegistry.register(metadata);
@@ -41,70 +41,26 @@ contract CanvasTest is Test, ERC1155Receiver, ERC721Receiver {
     }
 
     function testCreate() public {
-        bytes memory drawings = abi.encodePacked(
-            uint8(1),
-            uint8(0),
-            uint8(0),
-            uint8(0),
-            type(uint8).max
-        );
+        Layer[] memory layers = new Layer[](0);
+        bytes4[] memory colors = new bytes4[](1);
+        colors[0] = hex"000000FF";
+
+        bytes memory drawing = new bytes(256);
         for (uint256 i = 0; i < 256; i++) {
             if (i == 0 || i == 20 || i == 30) {
-                drawings = abi.encodePacked(drawings, uint8(1));
+                drawing[i] = bytes1(uint8(1));
             } else {
-                drawings = abi.encodePacked(drawings, uint8(0));
+                drawing[i] = bytes1(uint8(0));
             }
         }
+        bytes memory data =
+            abi.encode(uint256(16), uint256(16), layers, colors, drawing);
 
-        canvas.create(1, rule, metadata, drawings);
+        canvas.create(1, rule, metadata, data);
 
         // emit log(artwork.uri(1));
 
         assertEq(copyright.balanceOf(address(this)), 1);
         assertEq(artwork.balanceOf(address(this), 1), 1);
-    }
-
-    function testCompose() public {
-        bytes memory drawings1 = abi.encodePacked(
-            uint8(1),
-            uint8(0),
-            uint8(0),
-            uint8(0),
-            type(uint8).max
-        );
-        for (uint256 i = 0; i < 256; i++) {
-            if (i == 0 || i == 20 || i == 30) {
-                drawings1 = abi.encodePacked(drawings1, uint8(1));
-            } else {
-                drawings1 = abi.encodePacked(drawings1, uint8(0));
-            }
-        }
-
-        uint256 token1Id = canvas.create(2, rule, metadata, drawings1);
-
-        Layer[] memory layers = new Layer[](1);
-        layers[0] = Layer({
-            tokenId: token1Id,
-            transforms: new TransformParam[](0)
-        });
-        bytes memory drawings2 = abi.encodePacked(
-            uint8(1),
-            uint8(0),
-            uint8(0),
-            uint8(0),
-            type(uint8).max
-        );
-        for (uint256 i = 0; i < 256; i++) {
-            if (i == 10 || i == 100 || i == 130) {
-                drawings2 = abi.encodePacked(drawings2, uint8(1));
-            } else {
-                drawings2 = abi.encodePacked(drawings2, uint8(0));
-            }
-        }
-        uint256 token2Id = canvas.compose(1, rule, metadata, layers, drawings2);
-
-        assertEq(copyright.balanceOf(address(this)), 2);
-        assertEq(artwork.balanceOf(address(this), token1Id), 1);
-        assertEq(artwork.balanceOf(address(this), token2Id), 1);
     }
 }
