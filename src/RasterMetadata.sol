@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.13;
 
-import {Layer} from "./interfaces/Structs.sol";
+import {Layer, Meta} from "./interfaces/Structs.sol";
 import {UnsupportedMetadata, AlreadyCreated, LayerNotExisted, LayerOutOfBoundary, InvalidDrawing} from "./interfaces/Errors.sol";
 import {ICopyright} from "./interfaces/ICopyright.sol";
 import {IMetadata} from "./interfaces/IMetadata.sol";
@@ -10,16 +10,6 @@ import {ERC165} from "./libraries/ERC165.sol";
 import {SafeCast} from "./libraries/SafeCast.sol";
 import {RasterEngine, Rotate, Flip} from "./utils/RasterEngine.sol";
 import {RasterRenderer} from "./utils/RasterRenderer.sol";
-
-struct Meta {
-    uint256 width;
-    uint256 height;
-    RasterEngine.Palette palette;
-    Layer[] layers;
-    uint256[] ingredients;
-    mapping(uint256 => uint256) ingredientAmountOf;
-    bytes drawingLayer;
-}
 
 contract RasterMetadata is IMetadata, ERC165 {
     using RasterEngine for RasterEngine.Palette;
@@ -273,8 +263,8 @@ contract RasterMetadata is IMetadata, ERC165 {
         }
 
         if (
-            w + layer.translateX > baseWidth ||
-            h + layer.translateY > baseHeight
+            w + uint256(layer.translateX) > baseWidth ||
+            h + uint256(layer.translateY) > baseHeight
         ) {
             revert LayerOutOfBoundary(layer);
         }
