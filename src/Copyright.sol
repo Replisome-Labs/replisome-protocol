@@ -1,14 +1,14 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.13;
 
-import {Property, Layer, ActionType} from "./interfaces/Structs.sol";
+import {Property, Layer, Action} from "./interfaces/Structs.sol";
 import {Unauthorized, AlreadyMinted, NotMinted, InvalidRule, InvalidMetadata, NotRegisteredMetadata, InexistenceMetadata} from "./interfaces/Errors.sol";
 import {ICopyright} from "./interfaces/ICopyright.sol";
 import {IConfigurator} from "./interfaces/IConfigurator.sol";
 import {IMetadataRegistry} from "./interfaces/IMetadataRegistry.sol";
 import {IMetadata} from "./interfaces/IMetadata.sol";
 import {ICopyrightRenderer} from "./interfaces/ICopyrightRenderer.sol";
-import {IRule} from "./interfaces/IRule.sol";
+import {IRuleset} from "./interfaces/IRuleset.sol";
 import {IERC165} from "./interfaces/IERC165.sol";
 import {IERC20} from "./interfaces/IERC20.sol";
 import {IERC2981} from "./interfaces/IERC2981.sol";
@@ -60,9 +60,9 @@ contract Copyright is ICopyright, ERC721("HiggsPixel Copyright", "HPCR") {
         view
         returns (address receiver, uint256 royaltyAmount)
     {
-        receiver = getRoyaltyReceiver(ActionType.CopyrightSale, tokenId);
+        receiver = getRoyaltyReceiver(Action.CopyrightSale, tokenId);
         royaltyAmount = getRoyaltyAmount(
-            ActionType.CopyrightSale,
+            Action.CopyrightSale,
             tokenId,
             salePrice
         );
@@ -115,30 +115,30 @@ contract Copyright is ICopyright, ERC721("HiggsPixel Copyright", "HPCR") {
 
     function canDo(
         address owner,
-        ActionType action,
+        Action action,
         uint256 tokenId,
         uint256 amount
     ) external view returns (bool ok) {
         if (!exists(tokenId)) {
             revert NotMinted(tokenId);
         }
-        IRule rule = _propertyInfoOf[tokenId].rule;
+        IRuleset rule = _propertyInfoOf[tokenId].rule;
         if (address(rule) == address(0)) {
             // All permission is open if rule is empty
             ok = true;
         }
-        if (action == ActionType.Transfer) {
+        if (action == Action.ArtworkTransfer) {
             ok = rule.canTransfer(owner, amount);
         }
-        if (action == ActionType.Copy) {
+        if (action == Action.ArtworkCopy) {
             ok = rule.canCopy(owner, amount);
         }
-        if (action == ActionType.Burn) {
+        if (action == Action.ArtworkBurn) {
             ok = rule.canBurn(owner, amount);
         }
     }
 
-    function getRoyaltyToken(ActionType action, uint256 tokenId)
+    function getRoyaltyToken(Action action, uint256 tokenId)
         public
         view
         returns (IERC20 token)
@@ -146,7 +146,7 @@ contract Copyright is ICopyright, ERC721("HiggsPixel Copyright", "HPCR") {
         if (!exists(tokenId)) {
             revert NotMinted(tokenId);
         }
-        IRule rule = _propertyInfoOf[tokenId].rule;
+        IRuleset rule = _propertyInfoOf[tokenId].rule;
         if (address(rule) == address(0)) {
             token = IERC20(address(0));
         } else {
@@ -154,7 +154,7 @@ contract Copyright is ICopyright, ERC721("HiggsPixel Copyright", "HPCR") {
         }
     }
 
-    function getRoyaltyReceiver(ActionType action, uint256 tokenId)
+    function getRoyaltyReceiver(Action action, uint256 tokenId)
         public
         view
         returns (address receiver)
@@ -162,7 +162,7 @@ contract Copyright is ICopyright, ERC721("HiggsPixel Copyright", "HPCR") {
         if (!exists(tokenId)) {
             revert NotMinted(tokenId);
         }
-        IRule rule = _propertyInfoOf[tokenId].rule;
+        IRuleset rule = _propertyInfoOf[tokenId].rule;
         if (address(rule) == address(0)) {
             receiver = address(0);
         } else {
@@ -171,14 +171,14 @@ contract Copyright is ICopyright, ERC721("HiggsPixel Copyright", "HPCR") {
     }
 
     function getRoyaltyAmount(
-        ActionType action,
+        Action action,
         uint256 tokenId,
         uint256 value
     ) public view returns (uint256 amount) {
         if (!exists(tokenId)) {
             revert NotMinted(tokenId);
         }
-        IRule rule = _propertyInfoOf[tokenId].rule;
+        IRuleset rule = _propertyInfoOf[tokenId].rule;
         if (address(rule) == address(0)) {
             amount = uint256(0);
         } else {
@@ -212,11 +212,11 @@ contract Copyright is ICopyright, ERC721("HiggsPixel Copyright", "HPCR") {
 
     function claim(
         address creator,
-        IRule rule,
+        IRuleset rule,
         IMetadata metadata,
         uint256 metadataId
     ) external {
-        if (!address(rule).supportsInterface(type(IRule).interfaceId)) {
+        if (!address(rule).supportsInterface(type(IRuleset).interfaceId)) {
             revert InvalidRule(rule);
         }
         if (address(metadata) == address(0)) {
@@ -253,7 +253,7 @@ contract Copyright is ICopyright, ERC721("HiggsPixel Copyright", "HPCR") {
             configurator.feeToken(),
             msg.sender,
             configurator.treatury(),
-            configurator.copyrightClaimFee()
+            configurator.getFeeAmount(Action.CopyrightClaim, tokenId, 1)
         );
 
         _safeMint(creator, tokenId);
@@ -276,21 +276,21 @@ contract Copyright is ICopyright, ERC721("HiggsPixel Copyright", "HPCR") {
             configurator.feeToken(),
             msg.sender,
             configurator.treatury(),
-            configurator.copyrightWaiveFee()
+            configurator.getFeeAmount(Action.CopyrightWaive, tokenId, 1)
         );
 
         _burn(tokenId);
     }
 
-    function updateRule(uint256 tokenId, IRule rule) external {
+    function updateRule(uint256 tokenId, IRuleset rule) external {
         if (!exists(tokenId)) {
             revert NotMinted(tokenId);
         }
-        if (!address(rule).supportsInterface(type(IRule).interfaceId)) {
+        if (!address(rule).supportsInterface(type(IRuleset).interfaceId)) {
             revert InvalidRule(rule);
         }
 
-        IRule propertyRule = _propertyInfoOf[tokenId].rule;
+        IRuleset propertyRule = _propertyInfoOf[tokenId].rule;
         if (propertyRule.isUpgradable()) {
             propertyRule = rule;
             emit PropertyRuleUpdated(tokenId, rule);
@@ -303,7 +303,12 @@ contract Copyright is ICopyright, ERC721("HiggsPixel Copyright", "HPCR") {
         address to,
         uint256 amount
     ) internal {
-        if (address(token) != address(0)) {
+        if (
+            address(token) != address(0) &&
+            from != address(0) &&
+            to != address(0) &&
+            amount != uint256(0)
+        ) {
             token.safeTransferFrom(from, to, amount);
         }
     }

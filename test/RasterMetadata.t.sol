@@ -4,7 +4,7 @@ pragma solidity ^0.8.13;
 import "forge-std/Test.sol";
 import {RasterMetadata} from "../src/RasterMetadata.sol";
 import {Property, Layer, Rotate, Flip} from "../src/interfaces/Structs.sol";
-import {IRule} from "../src/interfaces/IRule.sol";
+import {IRuleset} from "../src/interfaces/IRuleset.sol";
 import {MockCopyright} from "./mock/MockCopyright.sol";
 
 contract RasterMetadataTest is Test {
@@ -33,8 +33,13 @@ contract RasterMetadataTest is Test {
                 drawing[i] = bytes1(uint8(0));
             }
         }
-        bytes memory data =
-            abi.encode(uint256(16), uint256(16), layers, colors, drawing);
+        bytes memory data = abi.encode(
+            uint256(16),
+            uint256(16),
+            layers,
+            colors,
+            drawing
+        );
 
         vm.expectEmit(true, false, false, false);
         emit Created(1);
@@ -67,8 +72,13 @@ contract RasterMetadataTest is Test {
                 drawing[i] = bytes1(uint8(0));
             }
         }
-        bytes memory data =
-            abi.encode(uint256(16), uint256(16), layers, colors, drawing);
+        bytes memory data = abi.encode(
+            uint256(16),
+            uint256(16),
+            layers,
+            colors,
+            drawing
+        );
 
         vm.expectEmit(true, false, false, false);
         emit Created(2);
@@ -92,14 +102,19 @@ contract RasterMetadataTest is Test {
                 drawing[i] = bytes1(uint8(0));
             }
         }
-        bytes memory data =
-            abi.encode(uint256(16), uint256(16), layers, colors, drawing);
+        bytes memory data = abi.encode(
+            uint256(16),
+            uint256(16),
+            layers,
+            colors,
+            drawing
+        );
 
         uint256 id = metadata.create(data);
 
         Property memory property = Property({
             creator: address(this),
-            rule: IRule(address(0)),
+            rule: IRuleset(address(0)),
             metadata: metadata,
             metadataId: id
         });

@@ -4,9 +4,11 @@ pragma solidity ^0.8.13;
 import "forge-std/Test.sol";
 import {Artwork} from "../src/Artwork.sol";
 import {Configurator} from "../src/Configurator.sol";
+import {ConstantFeeFormula} from "../src/ConstantFeeFormula.sol";
 import {Uncopiable, Unburnable} from "../src/interfaces/Errors.sol";
-import {ActionType} from "../src/interfaces/Structs.sol";
+import {Action} from "../src/interfaces/Structs.sol";
 import {IERC20} from "../src/interfaces/IERC20.sol";
+import {IFeeFormula} from "../src/interfaces/IFeeFormula.sol";
 import {ERC20} from "../src/libraries/ERC20.sol";
 import {ERC1155Receiver} from "../src/libraries/ERC1155Receiver.sol";
 import {MockCopyright} from "./mock/MockCopyright.sol";
@@ -29,8 +31,7 @@ contract ArtworkTest is Test, ERC1155Receiver {
     address public constant prankAddress = address(0);
     address public constant treatury = address(100);
     ERC20 public feeToken;
-    uint256 public constant artworkCopyFee = uint256(200);
-    uint256 public constant artworkBurnFee = uint256(300);
+    IFeeFormula public feeFormula;
     ERC20 public royaltyToken;
     address public constant royaltyReceiver = address(400);
     uint256 public constant royaltyAmount = uint256(500);
@@ -39,6 +40,8 @@ contract ArtworkTest is Test, ERC1155Receiver {
         ERC20 token = new ERC20("Test Token", "TST", 18);
         feeToken = token;
         royaltyToken = token;
+
+        feeFormula = new ConstantFeeFormula(100);
 
         configurator = new Configurator();
         mockCopyright = new MockCopyright();
@@ -66,13 +69,15 @@ contract ArtworkTest is Test, ERC1155Receiver {
 
         stdstore
             .target(address(configurator))
-            .sig(configurator.artworkCopyFee.selector)
-            .checked_write(artworkCopyFee);
+            .sig(configurator.fees.selector)
+            .with_key(uint256(Action.ArtworkCopy))
+            .checked_write(address(feeFormula));
 
         stdstore
             .target(address(configurator))
-            .sig(configurator.artworkBurnFee.selector)
-            .checked_write(artworkBurnFee);
+            .sig(configurator.fees.selector)
+            .with_key(uint256(Action.ArtworkBurn))
+            .checked_write(address(feeFormula));
     }
 
     function testCopy() public {
@@ -80,7 +85,7 @@ contract ArtworkTest is Test, ERC1155Receiver {
             .target(address(mockCopyright))
             .sig(mockCopyright.canDo.selector)
             .with_key(address(this))
-            .with_key(uint256(ActionType.Copy))
+            .with_key(uint256(Action.ArtworkCopy))
             .with_key(1)
             .with_key(1)
             .checked_write(true);
@@ -98,7 +103,7 @@ contract ArtworkTest is Test, ERC1155Receiver {
             .target(address(mockCopyright))
             .sig(mockCopyright.canDo.selector)
             .with_key(address(this))
-            .with_key(uint256(ActionType.Copy))
+            .with_key(uint256(Action.ArtworkCopy))
             .with_key(1)
             .with_key(1)
             .checked_write(false);
@@ -115,7 +120,7 @@ contract ArtworkTest is Test, ERC1155Receiver {
             .target(address(mockCopyright))
             .sig(mockCopyright.canDo.selector)
             .with_key(address(this))
-            .with_key(uint256(ActionType.Burn))
+            .with_key(uint256(Action.ArtworkBurn))
             .with_key(1)
             .with_key(1)
             .checked_write(true);
@@ -147,7 +152,7 @@ contract ArtworkTest is Test, ERC1155Receiver {
             .target(address(mockCopyright))
             .sig(mockCopyright.canDo.selector)
             .with_key(address(this))
-            .with_key(uint256(ActionType.Burn))
+            .with_key(uint256(Action.ArtworkBurn))
             .with_key(1)
             .with_key(1)
             .checked_write(false);

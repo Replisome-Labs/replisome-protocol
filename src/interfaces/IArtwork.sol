@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.13;
 
-import {ActionType} from "./Structs.sol";
 import {IConfigurator} from "./IConfigurator.sol";
 import {ICopyright} from "./ICopyright.sol";
 import {IERC1155} from "./IERC1155.sol";

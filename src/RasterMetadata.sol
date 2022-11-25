@@ -2,13 +2,7 @@
 pragma solidity ^0.8.13;
 
 import {Layer} from "./interfaces/Structs.sol";
-import {
-    UnsupportedMetadata,
-    AlreadyCreated,
-    LayerNotExisted,
-    LayerOutOfBoundary,
-    InvalidDrawing
-} from "./interfaces/Errors.sol";
+import {UnsupportedMetadata, AlreadyCreated, LayerNotExisted, LayerOutOfBoundary, InvalidDrawing} from "./interfaces/Errors.sol";
 import {ICopyright} from "./interfaces/ICopyright.sol";
 import {IMetadata} from "./interfaces/IMetadata.sol";
 import {IERC165} from "./interfaces/IERC165.sol";
@@ -52,12 +46,12 @@ contract RasterMetadata is IMetadata, ERC165 {
         public
         view
         virtual
-        override (ERC165, IERC165)
+        override(ERC165, IERC165)
         returns (bool)
     {
-        return interfaceId
-            == type(IMetadata).interfaceId
-            || super.supportsInterface(interfaceId);
+        return
+            interfaceId == type(IMetadata).interfaceId ||
+            super.supportsInterface(interfaceId);
     }
 
     function supportsMetadata(IMetadata metadata)
@@ -118,8 +112,8 @@ contract RasterMetadata is IMetadata, ERC165 {
         returns (uint256[] memory tokenIds, uint256[] memory amounts)
     {
         tokenIds = _metaOf[metadataId].ingredients;
-        mapping(uint256 => uint256) storage amountOf =
-            _metaOf[metadataId].ingredientAmountOf;
+        mapping(uint256 => uint256) storage amountOf = _metaOf[metadataId]
+            .ingredientAmountOf;
         amounts = new uint256[](tokenIds.length);
         unchecked {
             for (uint256 i = 0; i < tokenIds.length; i++) {
@@ -131,10 +125,7 @@ contract RasterMetadata is IMetadata, ERC165 {
     /**
      * @dev data is encoded by (uint256, uint256, Layer[], bytes4[], bytes)
      */
-    function verify(bytes calldata data)
-        external
-        returns (uint256 metadataId)
-    {
+    function verify(bytes calldata data) external returns (uint256 metadataId) {
         (
             uint256 w,
             uint256 h,
@@ -160,10 +151,7 @@ contract RasterMetadata is IMetadata, ERC165 {
     /**
      * @dev data is encoded by (uint256, uint256, Layer[], bytes4[], bytes)
      */
-    function create(bytes calldata data)
-        external
-        returns (uint256 metadataId)
-    {
+    function create(bytes calldata data) external returns (uint256 metadataId) {
         (
             uint256 w,
             uint256 h,
@@ -204,20 +192,23 @@ contract RasterMetadata is IMetadata, ERC165 {
             bytes memory drawing
         )
     {
-        (w, h, layers, colors, drawing) =
-            abi.decode(data, (uint256, uint256, Layer[], bytes4[], bytes));
+        (w, h, layers, colors, drawing) = abi.decode(
+            data,
+            (uint256, uint256, Layer[], bytes4[], bytes)
+        );
     }
 
-    function _processLayers(Meta storage meta, Layer[] memory layers)
-        internal
-    {
+    function _processLayers(Meta storage meta, Layer[] memory layers) internal {
         unchecked {
             for (uint256 i = 0; i < layers.length; i++) {
                 Layer memory layer = layers[i];
 
                 // validate layer metadata
-                (, uint256 metadataId) =
-                    _validateLayer(layer, meta.width, meta.height);
+                (, uint256 metadataId) = _validateLayer(
+                    layer,
+                    meta.width,
+                    meta.height
+                );
 
                 // save palette
                 bytes4[] memory colors = getColors(metadataId);
@@ -248,9 +239,7 @@ contract RasterMetadata is IMetadata, ERC165 {
         }
     }
 
-    function _processDrawing(Meta storage meta, bytes memory drawing)
-        internal
-    {
+    function _processDrawing(Meta storage meta, bytes memory drawing) internal {
         if (drawing.length != meta.width * meta.height) {
             revert InvalidDrawing(drawing);
         }
@@ -262,11 +251,7 @@ contract RasterMetadata is IMetadata, ERC165 {
         Layer memory layer,
         uint256 baseWidth,
         uint256 baseHeight
-    )
-        internal
-        view
-        returns (IMetadata metadata, uint256 metadataId)
-    {
+    ) internal view returns (IMetadata metadata, uint256 metadataId) {
         (metadata, metadataId) = copyright.metadataOf(layer.tokenId);
 
         if (!supportsMetadata(metadata)) {
@@ -288,7 +273,8 @@ contract RasterMetadata is IMetadata, ERC165 {
         }
 
         if (
-            w + layer.translateX > baseWidth || h + layer.translateY > baseHeight
+            w + layer.translateX > baseWidth ||
+            h + layer.translateY > baseHeight
         ) {
             revert LayerOutOfBoundary(layer);
         }

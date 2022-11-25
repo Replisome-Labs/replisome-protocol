@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.13;
 
-import {IRule} from "./IRule.sol";
+import {IRuleset} from "./IRuleset.sol";
 import {IMetadata} from "./IMetadata.sol";
 import {Layer} from "./Structs.sol";
 
@@ -45,7 +45,7 @@ error InvalidSigner(address account);
 
 error InvalidCreator(address account);
 
-error InvalidRule(IRule rule);
+error InvalidRule(IRuleset rule);
 
 error InvalidMetadata(IMetadata metadata);
 

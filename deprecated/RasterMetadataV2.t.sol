@@ -4,7 +4,7 @@ pragma solidity ^0.8.13;
 import "forge-std/Test.sol";
 import {RasterMetadataV2} from "./RasterMetadataV2.sol";
 import {Property, Layer, TransformParam} from "../interfaces/Structs.sol";
-import {IRule} from "../interfaces/IRule.sol";
+import {IRuleset} from "../interfaces/IRuleset.sol";
 import {MockCopyright} from "../../test/mock/MockCopyright.sol";
 
 contract RasterMetadataV2Test is Test {
@@ -78,7 +78,7 @@ contract RasterMetadataV2Test is Test {
 
         Property memory property = Property({
             creator: address(this),
-            rule: IRule(address(0)),
+            rule: IRuleset(address(0)),
             metadata: metadata,
             metadataId: id
         });

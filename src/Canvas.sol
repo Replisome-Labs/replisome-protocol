@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.13;
 
-import {Layer, ActionType} from "./interfaces/Structs.sol";
+import {Layer, Action} from "./interfaces/Structs.sol";
 import {IArtwork} from "./interfaces/IArtwork.sol";
 import {ICanvas} from "./interfaces/ICanvas.sol";
 import {IConfigurator} from "./interfaces/IConfigurator.sol";
@@ -9,7 +9,7 @@ import {ICopyright} from "./interfaces/ICopyright.sol";
 import {IERC165} from "./interfaces/IERC165.sol";
 import {IERC20} from "./interfaces/IERC20.sol";
 import {IMetadata} from "./interfaces/IMetadata.sol";
-import {IRule} from "./interfaces/IRule.sol";
+import {IRuleset} from "./interfaces/IRuleset.sol";
 import {ERC165} from "./libraries/ERC165.sol";
 import {ERC721Receiver} from "./libraries/ERC721Receiver.sol";
 import {ERC1155Receiver} from "./libraries/ERC1155Receiver.sol";
@@ -36,39 +36,42 @@ contract Canvas is ICanvas, ERC165, ERC721Receiver, ERC1155Receiver {
         public
         view
         virtual
-        override (ERC165, IERC165)
+        override(ERC165, IERC165)
         returns (bool)
     {
-        return interfaceId
-            == type(ICanvas).interfaceId
-            || super.supportsInterface(interfaceId);
+        return
+            interfaceId == type(ICanvas).interfaceId ||
+            super.supportsInterface(interfaceId);
     }
 
     function create(
         uint256 amount,
-        IRule rule,
+        IRuleset rule,
         IMetadata metadata,
         bytes calldata data
-    )
-        external
-        returns (uint256 tokenId)
-    {
+    ) external returns (uint256 tokenId) {
         _payFee(
             configurator.feeToken(),
             msg.sender,
             address(this),
-            configurator.copyrightClaimFee()
-                + (configurator.artworkCopyFee() * amount)
+            configurator.getFeeAmount(Action.CopyrightClaim, data, 1)
         );
 
         tokenId = _createAndClaim(rule, metadata, data);
 
         if (amount > 0) {
             _payFee(
-                copyright.getRoyaltyToken(ActionType.Copy, tokenId),
+                copyright.getRoyaltyToken(Action.ArtworkCopy, tokenId),
                 msg.sender,
                 address(this),
-                copyright.getRoyaltyAmount(ActionType.Copy, tokenId, amount)
+                copyright.getRoyaltyAmount(Action.ArtworkCopy, tokenId, amount)
+            );
+
+            _payFee(
+                configurator.feeToken(),
+                msg.sender,
+                address(this),
+                configurator.getFeeAmount(Action.ArtworkCopy, tokenId, amount)
             );
 
             artwork.copy(msg.sender, tokenId, amount);
@@ -81,14 +84,14 @@ contract Canvas is ICanvas, ERC165, ERC721Receiver, ERC1155Receiver {
                 configurator.feeToken(),
                 msg.sender,
                 address(this),
-                configurator.artworkCopyFee() * amount
+                configurator.getFeeAmount(Action.ArtworkCopy, tokenId, amount)
             );
 
             _payFee(
-                copyright.getRoyaltyToken(ActionType.Copy, tokenId),
+                copyright.getRoyaltyToken(Action.ArtworkCopy, tokenId),
                 msg.sender,
                 address(this),
-                copyright.getRoyaltyAmount(ActionType.Copy, tokenId, amount)
+                copyright.getRoyaltyAmount(Action.ArtworkCopy, tokenId, amount)
             );
 
             artwork.copy(msg.sender, tokenId, amount);
@@ -100,7 +103,7 @@ contract Canvas is ICanvas, ERC165, ERC721Receiver, ERC1155Receiver {
             configurator.feeToken(),
             msg.sender,
             address(this),
-            configurator.copyrightWaiveFee()
+            configurator.getFeeAmount(Action.CopyrightWaive, tokenId, 1)
         );
 
         copyright.waive(tokenId);
@@ -112,14 +115,14 @@ contract Canvas is ICanvas, ERC165, ERC721Receiver, ERC1155Receiver {
                 configurator.feeToken(),
                 msg.sender,
                 address(this),
-                configurator.artworkBurnFee()
+                configurator.getFeeAmount(Action.ArtworkBurn, tokenId, amount)
             );
 
             _payFee(
-                copyright.getRoyaltyToken(ActionType.Burn, tokenId),
+                copyright.getRoyaltyToken(Action.ArtworkBurn, tokenId),
                 msg.sender,
                 address(this),
-                copyright.getRoyaltyAmount(ActionType.Burn, tokenId, amount)
+                copyright.getRoyaltyAmount(Action.ArtworkBurn, tokenId, amount)
             );
 
             artwork.burn(msg.sender, tokenId, amount);
@@ -127,21 +130,21 @@ contract Canvas is ICanvas, ERC165, ERC721Receiver, ERC1155Receiver {
     }
 
     function _createAndClaim(
-        IRule rule,
+        IRuleset rule,
         IMetadata metadata,
         bytes calldata data
-    )
-        internal
-        returns (uint256 tokenId)
-    {
+    ) internal returns (uint256 tokenId) {
         uint256 metadataId = metadata.create(data);
         copyright.claim(msg.sender, rule, metadata, metadataId);
         tokenId = copyright.search(metadata, metadataId);
     }
 
-    function _payFee(IERC20 token, address from, address to, uint256 amount)
-        internal
-    {
+    function _payFee(
+        IERC20 token,
+        address from,
+        address to,
+        uint256 amount
+    ) internal {
         if (address(token) != address(0)) {
             token.safeTransferFrom(from, to, amount);
         }

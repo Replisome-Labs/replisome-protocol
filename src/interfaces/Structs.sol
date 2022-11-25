@@ -1,14 +1,17 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.13;
 
-import {IRule} from "./IRule.sol";
+import {IRuleset} from "./IRuleset.sol";
 import {IMetadata} from "./IMetadata.sol";
 
-enum ActionType {
-    Transfer,
-    Copy,
-    Burn,
+enum Action {
+    ArtworkTransfer,
+    ArtworkCopy,
+    ArtworkBurn,
     ArtworkSale,
+    CopyrightTransfer,
+    CopyrightClaim,
+    CopyrightWaive,
     CopyrightSale
 }
 
@@ -35,7 +38,7 @@ struct Layer {
 
 struct Property {
     address creator;
-    IRule rule;
+    IRuleset rule;
     IMetadata metadata;
     uint256 metadataId;
 }

@@ -12,14 +12,6 @@ contract ConfiguratorTest is Test {
 
     event FeeTokenUpdated(IERC20 indexed token);
 
-    event CopyrightClaimFeeUpdated(uint256 amount);
-
-    event CopyrightWaiveFeeUpdated(uint256 amount);
-
-    event ArtworkCopyFeeUpdated(uint256 amount);
-
-    event ArtworkBurnFeeUpdated(uint256 amount);
-
     event CopyrightRendererUpdated(ICopyrightRenderer indexed renderer);
 
     Configurator public configurator;
@@ -67,70 +59,6 @@ contract ConfiguratorTest is Test {
         );
         vm.startPrank(prankAddress);
         configurator.setFeeToken(feeToken);
-        vm.stopPrank();
-    }
-
-    function testSetCopyrightClaimFee() public {
-        vm.expectEmit(false, false, false, true);
-        emit CopyrightClaimFeeUpdated(copyrightClaimFee);
-        configurator.setCopyrightClaimFee(copyrightClaimFee);
-        assertEq(configurator.copyrightClaimFee(), copyrightClaimFee);
-    }
-
-    function testSetCopyrightClaimFeeAsNotOwner() public {
-        vm.expectRevert(
-            abi.encodeWithSelector(Unauthorized.selector, prankAddress)
-        );
-        vm.startPrank(prankAddress);
-        configurator.setCopyrightClaimFee(copyrightClaimFee);
-        vm.stopPrank();
-    }
-
-    function testSetCopyrightWaiveFee() public {
-        vm.expectEmit(false, false, false, true);
-        emit CopyrightWaiveFeeUpdated(copyrightWaiveFee);
-        configurator.setCopyrightWaiveFee(copyrightWaiveFee);
-        assertEq(configurator.copyrightWaiveFee(), copyrightWaiveFee);
-    }
-
-    function testSetCopyrightWaiveFeeAsNotOwner() public {
-        vm.expectRevert(
-            abi.encodeWithSelector(Unauthorized.selector, prankAddress)
-        );
-        vm.startPrank(prankAddress);
-        configurator.setCopyrightWaiveFee(copyrightWaiveFee);
-        vm.stopPrank();
-    }
-
-    function testSetArtworkCopyFee() public {
-        vm.expectEmit(false, false, false, true);
-        emit ArtworkCopyFeeUpdated(artworkCopyFee);
-        configurator.setArtworkCopyFee(artworkCopyFee);
-        assertEq(configurator.artworkCopyFee(), artworkCopyFee);
-    }
-
-    function testSetArtworkCopyFeeAsNotOwner() public {
-        vm.expectRevert(
-            abi.encodeWithSelector(Unauthorized.selector, prankAddress)
-        );
-        vm.startPrank(prankAddress);
-        configurator.setArtworkCopyFee(artworkCopyFee);
-        vm.stopPrank();
-    }
-
-    function testSetArtworkBurnFee() public {
-        vm.expectEmit(false, false, false, true);
-        emit ArtworkBurnFeeUpdated(artworkBurnFee);
-        configurator.setArtworkBurnFee(artworkBurnFee);
-        assertEq(configurator.artworkBurnFee(), artworkBurnFee);
-    }
-
-    function testSetArtworkBurnFeeAsNotOwner() public {
-        vm.expectRevert(
-            abi.encodeWithSelector(Unauthorized.selector, prankAddress)
-        );
-        vm.startPrank(prankAddress);
-        configurator.setArtworkBurnFee(artworkBurnFee);
         vm.stopPrank();
     }
 

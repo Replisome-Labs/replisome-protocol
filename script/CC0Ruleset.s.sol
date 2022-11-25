@@ -2,7 +2,7 @@
 pragma solidity ^0.8.13;
 
 import "forge-std/Script.sol";
-import {CC0Rule} from "../src/rules/CC0Rule.sol";
+import {CC0Ruleset} from "../src/rulesets/CC0Ruleset.sol";
 
 contract DeployCC0Rule is Script {
     function setUp() public {}
@@ -10,7 +10,7 @@ contract DeployCC0Rule is Script {
     function run() public {
         vm.startBroadcast();
 
-        CC0Rule rule = new CC0Rule();
+        CC0Ruleset rule = new CC0Ruleset();
 
         vm.stopBroadcast();
 
@@ -19,7 +19,7 @@ contract DeployCC0Rule is Script {
                 abi.encodePacked(
                     "./data/",
                     vm.toString(block.chainid),
-                    "/CC0Rule"
+                    "/CC0Ruleset"
                 )
             ),
             vm.toString(address(rule))

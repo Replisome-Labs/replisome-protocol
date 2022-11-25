@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.13;
 
-import {Property, ActionType} from "../../src/interfaces/Structs.sol";
+import {Property, Action} from "../../src/interfaces/Structs.sol";
 import {IConfigurator} from "../../src/interfaces/IConfigurator.sol";
 import {IMetadataRegistry} from "../../src/interfaces/IMetadataRegistry.sol";
 import {ICopyright} from "../../src/interfaces/ICopyright.sol";
 import {IMetadata} from "../../src/interfaces/IMetadata.sol";
-import {IRule} from "../../src/interfaces/IRule.sol";
+import {IRuleset} from "../../src/interfaces/IRuleset.sol";
 import {IERC165} from "../../src/interfaces/IERC165.sol";
 import {IERC2981} from "../../src/interfaces/IERC2981.sol";
 import {IERC20} from "../../src/interfaces/IERC20.sol";
@@ -47,18 +47,17 @@ contract MockCopyright is ICopyright, ERC721("HiggsPixel Copyright", "HPCR") {
     }
 
     // mapping from owner to action to tokenId to amount to ok
-    mapping(address => mapping(ActionType => mapping(uint256 => mapping(uint256 => bool))))
+    mapping(address => mapping(Action => mapping(uint256 => mapping(uint256 => bool))))
         public canDo;
 
     // mapping from action to tokenId to token
-    mapping(ActionType => mapping(uint256 => IERC20)) public getRoyaltyToken;
+    mapping(Action => mapping(uint256 => IERC20)) public getRoyaltyToken;
 
     // mapping from action to tokenId to receiver
-    mapping(ActionType => mapping(uint256 => address))
-        public getRoyaltyReceiver;
+    mapping(Action => mapping(uint256 => address)) public getRoyaltyReceiver;
 
     // mapping from action to tokenId to value to amount
-    mapping(ActionType => mapping(uint256 => mapping(uint256 => uint256)))
+    mapping(Action => mapping(uint256 => mapping(uint256 => uint256)))
         public getRoyaltyAmount;
 
     function getIngredients(uint256 tokenId)
@@ -83,7 +82,7 @@ contract MockCopyright is ICopyright, ERC721("HiggsPixel Copyright", "HPCR") {
 
     function claim(
         address,
-        IRule,
+        IRuleset,
         IMetadata,
         uint256
     ) external pure {
@@ -94,7 +93,7 @@ contract MockCopyright is ICopyright, ERC721("HiggsPixel Copyright", "HPCR") {
         return;
     }
 
-    function updateRule(uint256, IRule) external pure {
+    function updateRule(uint256, IRuleset) external pure {
         return;
     }
 

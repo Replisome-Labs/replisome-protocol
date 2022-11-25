@@ -8,7 +8,7 @@ import {MetadataRegistry} from "../src/MetadataRegistry.sol";
 import {Copyright} from "../src/Copyright.sol";
 import {Artwork} from "../src/Artwork.sol";
 import {RasterMetadata} from "../src/RasterMetadata.sol";
-import {CC0Rule} from "../src/rules/CC0Rule.sol";
+import {CC0Ruleset} from "../src/rulesets/CC0Ruleset.sol";
 import {ERC1155Receiver} from "../src/libraries/ERC1155Receiver.sol";
 import {ERC721Receiver} from "../src/libraries/ERC721Receiver.sol";
 import {Layer, Rotate, Flip} from "../src/interfaces/Structs.sol";
@@ -24,7 +24,7 @@ contract CanvasTest is Test, ERC1155Receiver, ERC721Receiver {
     Copyright public copyright;
     Artwork public artwork;
     RasterMetadata public metadata;
-    CC0Rule public rule;
+    CC0Ruleset public rule;
 
     function setUp() public {
         configurator = new Configurator();
@@ -33,7 +33,7 @@ contract CanvasTest is Test, ERC1155Receiver, ERC721Receiver {
         artwork = new Artwork(configurator, copyright);
         canvas = new Canvas(configurator, copyright, artwork);
         metadata = new RasterMetadata(copyright);
-        rule = new CC0Rule();
+        rule = new CC0Ruleset();
 
         metadataRegistry.register(metadata);
 
@@ -53,8 +53,13 @@ contract CanvasTest is Test, ERC1155Receiver, ERC721Receiver {
                 drawing[i] = bytes1(uint8(0));
             }
         }
-        bytes memory data =
-            abi.encode(uint256(16), uint256(16), layers, colors, drawing);
+        bytes memory data = abi.encode(
+            uint256(16),
+            uint256(16),
+            layers,
+            colors,
+            drawing
+        );
 
         canvas.create(1, rule, metadata, data);
 

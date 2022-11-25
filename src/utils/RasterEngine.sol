@@ -1,12 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.13;
 
-import {
-    FrameSizeMistatch,
-    FrameSizeOverflow,
-    FrameOutOfBoundary,
-    ColorNotFound
-} from "../interfaces/Errors.sol";
+import {FrameSizeMistatch, FrameSizeOverflow, FrameOutOfBoundary, ColorNotFound} from "../interfaces/Errors.sol";
 import {Rotate, Flip} from "../interfaces/Structs.sol";
 
 library RasterEngine {
@@ -98,10 +93,8 @@ library RasterEngine {
         pure
     {
         if (
-            baseFrame.width
-                != layerFrame.width
-                || baseFrame.height
-                != layerFrame.height
+            baseFrame.width != layerFrame.width ||
+            baseFrame.height != layerFrame.height
         ) {
             revert FrameSizeMistatch();
         }
@@ -118,10 +111,7 @@ library RasterEngine {
         Frame memory frame,
         Palette storage fromPalette,
         Palette storage toPalette
-    )
-        internal
-        view
-    {
+    ) internal view {
         unchecked {
             for (uint256 i = 0; i < frame.data.length; i++) {
                 bytes1 pixel = frame.data[i];
@@ -144,10 +134,7 @@ library RasterEngine {
         uint256 translateY,
         uint256 baseWidth,
         uint256 baseHeight
-    )
-        internal
-        pure
-    {
+    ) internal pure {
         rotateFrame(frame, rotate);
         flipFrame(frame, flip);
         translateFrame(frame, translateX, translateY, baseWidth, baseHeight);
@@ -208,17 +195,10 @@ library RasterEngine {
         uint256 translateY,
         uint256 baseWidth,
         uint256 baseHeight
-    )
-        internal
-        pure
-    {
+    ) internal pure {
         if (
-            frame.width
-                + translateX
-                > baseWidth
-                || frame.height
-                + translateY
-                > baseHeight
+            frame.width + translateX > baseWidth ||
+            frame.height + translateY > baseHeight
         ) {
             revert FrameOutOfBoundary();
         }
@@ -229,7 +209,7 @@ library RasterEngine {
         for (uint256 i = 0; i < frame.data.length; i++) {
             bytes1 pixel = frame.data[i];
             if (pixel == bytes1(0)) continue;
-            uint256 x = i % frame.width + translateX;
+            uint256 x = (i % frame.width) + translateX;
             uint256 y = i / frame.height + translateY;
             uint256 pos = y * frame.width + x;
             newData[pos] = pixel;
@@ -237,10 +217,11 @@ library RasterEngine {
         frame.data = newData;
     }
 
-    function scaleFrame(Frame memory frame, uint256 toWidth, uint256 toHeight)
-        internal
-        pure
-    {
+    function scaleFrame(
+        Frame memory frame,
+        uint256 toWidth,
+        uint256 toHeight
+    ) internal pure {
         if (frame.width > toWidth || frame.height > toHeight) {
             revert FrameSizeOverflow();
         }

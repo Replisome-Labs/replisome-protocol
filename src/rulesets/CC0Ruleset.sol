@@ -1,13 +1,13 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.13;
 
-import {ActionType} from "../interfaces/Structs.sol";
+import {Action} from "../interfaces/Structs.sol";
 import {IERC165} from "../interfaces/IERC165.sol";
 import {IERC20} from "../interfaces/IERC20.sol";
-import {IRule} from "../interfaces/IRule.sol";
+import {IRuleset} from "../interfaces/IRuleset.sol";
 import {ERC165} from "../libraries/ERC165.sol";
 
-contract CC0Rule is IRule, ERC165 {
+contract CC0Ruleset is IRuleset, ERC165 {
     function supportsInterface(bytes4 interfaceId)
         public
         view
@@ -16,7 +16,7 @@ contract CC0Rule is IRule, ERC165 {
         returns (bool)
     {
         return
-            interfaceId == type(IRule).interfaceId ||
+            interfaceId == type(IRuleset).interfaceId ||
             super.supportsInterface(interfaceId);
     }
 
@@ -36,7 +36,7 @@ contract CC0Rule is IRule, ERC165 {
         ok = true;
     }
 
-    function getRoyaltyReceiver(ActionType)
+    function getRoyaltyReceiver(Action)
         external
         pure
         returns (address receiver)
@@ -44,11 +44,11 @@ contract CC0Rule is IRule, ERC165 {
         receiver = address(0);
     }
 
-    function getRoyaltyToken(ActionType) external pure returns (IERC20 token) {
+    function getRoyaltyToken(Action) external pure returns (IERC20 token) {
         token = IERC20(address(0));
     }
 
-    function getRoyaltyAmount(ActionType, uint256)
+    function getRoyaltyAmount(Action, uint256)
         external
         pure
         returns (uint256 amount)

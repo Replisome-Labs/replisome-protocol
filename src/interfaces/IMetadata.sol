@@ -33,11 +33,7 @@ interface IMetadata is IERC165 {
         view
         returns (uint256[] memory ids, uint256[] memory amounts);
 
-    function verify(bytes calldata data)
-        external
-        returns (uint256 metadataId);
+    function verify(bytes calldata data) external returns (uint256 metadataId);
 
-    function create(bytes calldata data)
-        external
-        returns (uint256 metadataId);
+    function create(bytes calldata data) external returns (uint256 metadataId);
 }

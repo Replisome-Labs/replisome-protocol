@@ -1,25 +1,55 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.13;
 
+import {Action} from "./interfaces/Structs.sol";
 import {IConfigurator} from "./interfaces/IConfigurator.sol";
 import {IERC20} from "./interfaces/IERC20.sol";
 import {ICopyrightRenderer} from "./interfaces/ICopyrightRenderer.sol";
+import {IFeeFormula} from "./interfaces/IFeeFormula.sol";
 import {Owned} from "./libraries/Owned.sol";
 
 contract Configurator is Owned(msg.sender), IConfigurator {
+    ICopyrightRenderer public copyrightRenderer;
+
     address public treatury;
 
     IERC20 public feeToken;
 
-    uint256 public copyrightClaimFee;
+    mapping(Action => IFeeFormula) public fees;
 
-    uint256 public copyrightWaiveFee;
+    function getFeeAmount(
+        Action action,
+        uint256 tokenId,
+        uint256 amount
+    ) external view returns (uint256 price) {
+        IFeeFormula feeFormula = fees[action];
+        if (address(feeFormula) == address(0)) {
+            price = uint256(0);
+        } else {
+            price = feeFormula.getPrice(tokenId, amount);
+        }
+    }
 
-    uint256 public artworkCopyFee;
+    function getFeeAmount(
+        Action action,
+        bytes calldata tokenData,
+        uint256 amount
+    ) external view returns (uint256 price) {
+        IFeeFormula feeFormula = fees[action];
+        if (address(feeFormula) == address(0)) {
+            price = uint256(0);
+        } else {
+            price = feeFormula.estimatePrice(tokenData, amount);
+        }
+    }
 
-    uint256 public artworkBurnFee;
-
-    ICopyrightRenderer public copyrightRenderer;
+    function setFeeFormula(Action action, IFeeFormula feeFormula)
+        external
+        onlyOwner
+    {
+        fees[action] = feeFormula;
+        emit FeeUpdated(action, feeFormula);
+    }
 
     function setTreatury(address vault) external onlyOwner {
         treatury = vault;
@@ -29,26 +59,6 @@ contract Configurator is Owned(msg.sender), IConfigurator {
     function setFeeToken(IERC20 token) external onlyOwner {
         feeToken = token;
         emit FeeTokenUpdated(token);
-    }
-
-    function setCopyrightClaimFee(uint256 amount) external onlyOwner {
-        copyrightClaimFee = amount;
-        emit CopyrightClaimFeeUpdated(amount);
-    }
-
-    function setCopyrightWaiveFee(uint256 amount) external onlyOwner {
-        copyrightWaiveFee = amount;
-        emit CopyrightWaiveFeeUpdated(amount);
-    }
-
-    function setArtworkCopyFee(uint256 amount) external onlyOwner {
-        artworkCopyFee = amount;
-        emit ArtworkCopyFeeUpdated(amount);
-    }
-
-    function setArtworkBurnFee(uint256 amount) external onlyOwner {
-        artworkBurnFee = amount;
-        emit ArtworkBurnFeeUpdated(amount);
     }
 
     function setCopyrightRenderer(ICopyrightRenderer renderer)

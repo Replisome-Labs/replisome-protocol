@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.13;
 
-import {ActionType} from "./interfaces/Structs.sol";
+import {Action} from "./interfaces/Structs.sol";
 import {Unauthorized, Untransferable, Uncopiable, Unburnable} from "./interfaces/Errors.sol";
 import {IArtwork} from "./interfaces/IArtwork.sol";
 import {IConfigurator} from "./interfaces/IConfigurator.sol";
@@ -49,12 +49,9 @@ contract Artwork is IArtwork, ERC1155 {
         view
         returns (address receiver, uint256 royaltyAmount)
     {
-        receiver = copyright.getRoyaltyReceiver(
-            ActionType.ArtworkSale,
-            tokenId
-        );
+        receiver = copyright.getRoyaltyReceiver(Action.ArtworkSale, tokenId);
         royaltyAmount = copyright.getRoyaltyAmount(
-            ActionType.ArtworkSale,
+            Action.ArtworkSale,
             tokenId,
             salePrice
         );
@@ -96,7 +93,7 @@ contract Artwork is IArtwork, ERC1155 {
         uint256 amount,
         bytes calldata data
     ) public override(ERC1155, IERC1155) {
-        if (!copyright.canDo(from, ActionType.Transfer, tokenId, amount)) {
+        if (!copyright.canDo(from, Action.ArtworkTransfer, tokenId, amount)) {
             revert Untransferable();
         }
         super.safeTransferFrom(from, to, tokenId, amount, data);
@@ -114,7 +111,7 @@ contract Artwork is IArtwork, ERC1155 {
                 if (
                     !copyright.canDo(
                         from,
-                        ActionType.Transfer,
+                        Action.ArtworkTransfer,
                         tokenIds[i],
                         amounts[i]
                     )
@@ -143,7 +140,7 @@ contract Artwork is IArtwork, ERC1155 {
             revert Unauthorized(msg.sender);
         }
 
-        if (!copyright.canDo(account, ActionType.Copy, tokenId, amount)) {
+        if (!copyright.canDo(account, Action.ArtworkCopy, tokenId, amount)) {
             revert Uncopiable();
         }
 
@@ -152,15 +149,15 @@ contract Artwork is IArtwork, ERC1155 {
             configurator.feeToken(),
             msg.sender,
             configurator.treatury(),
-            configurator.artworkCopyFee() * amount
+            configurator.getFeeAmount(Action.ArtworkCopy, tokenId, amount)
         );
 
         // pay royalty fee
         _payFee(
-            copyright.getRoyaltyToken(ActionType.Copy, tokenId),
+            copyright.getRoyaltyToken(Action.ArtworkCopy, tokenId),
             msg.sender,
-            copyright.getRoyaltyReceiver(ActionType.Copy, tokenId),
-            copyright.getRoyaltyAmount(ActionType.Copy, tokenId, amount)
+            copyright.getRoyaltyReceiver(Action.ArtworkCopy, tokenId),
+            copyright.getRoyaltyAmount(Action.ArtworkCopy, tokenId, amount)
         );
 
         _consume(account, tokenId, amount);
@@ -177,7 +174,7 @@ contract Artwork is IArtwork, ERC1155 {
             revert Unauthorized(msg.sender);
         }
 
-        if (!copyright.canDo(account, ActionType.Burn, tokenId, amount)) {
+        if (!copyright.canDo(account, Action.ArtworkBurn, tokenId, amount)) {
             revert Unburnable();
         }
 
@@ -186,15 +183,15 @@ contract Artwork is IArtwork, ERC1155 {
             configurator.feeToken(),
             msg.sender,
             configurator.treatury(),
-            configurator.artworkBurnFee() * amount
+            configurator.getFeeAmount(Action.ArtworkBurn, tokenId, amount)
         );
 
         // pay royalty fee
         _payFee(
-            copyright.getRoyaltyToken(ActionType.Burn, tokenId),
+            copyright.getRoyaltyToken(Action.ArtworkBurn, tokenId),
             msg.sender,
-            copyright.getRoyaltyReceiver(ActionType.Burn, tokenId),
-            copyright.getRoyaltyAmount(ActionType.Burn, tokenId, amount)
+            copyright.getRoyaltyReceiver(Action.ArtworkBurn, tokenId),
+            copyright.getRoyaltyAmount(Action.ArtworkBurn, tokenId, amount)
         );
 
         _burn(account, tokenId, amount);
@@ -244,7 +241,12 @@ contract Artwork is IArtwork, ERC1155 {
         address to,
         uint256 amount
     ) internal {
-        if (address(token) != address(0)) {
+        if (
+            address(token) != address(0) &&
+            from != address(0) &&
+            to != address(0) &&
+            amount != uint256(0)
+        ) {
             token.safeTransferFrom(from, to, amount);
         }
     }

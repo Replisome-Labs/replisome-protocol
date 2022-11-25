@@ -6,7 +6,7 @@ import {IConfigurator} from "./IConfigurator.sol";
 import {ICopyright} from "./ICopyright.sol";
 import {IArtwork} from "./IArtwork.sol";
 import {IMetadata} from "./IMetadata.sol";
-import {IRule} from "./IRule.sol";
+import {IRuleset} from "./IRuleset.sol";
 import {IERC165} from "./IERC165.sol";
 import {IERC721Receiver} from "./IERC721Receiver.sol";
 import {IERC1155Receiver} from "./IERC1155Receiver.sol";
@@ -20,12 +20,10 @@ interface ICanvas is IERC165, IERC721Receiver, IERC1155Receiver {
 
     function create(
         uint256 amount,
-        IRule rule,
+        IRuleset rule,
         IMetadata metadata,
         bytes calldata data
-    )
-        external
-        returns (uint256 tokenId);
+    ) external returns (uint256 tokenId);
 
     function copy(uint256 tokenId, uint256 amount) external;
 
