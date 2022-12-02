@@ -5,6 +5,7 @@ import {Action} from "./Structs.sol";
 import {IERC20} from "./IERC20.sol";
 import {ICopyrightRenderer} from "./ICopyrightRenderer.sol";
 import {IFeeFormula} from "./IFeeFormula.sol";
+import {IMetadata} from "./IMetadata.sol";
 
 interface IConfigurator {
     event TreaturyUpdated(address indexed vault);
@@ -25,13 +26,8 @@ interface IConfigurator {
 
     function getFeeAmount(
         Action action,
-        uint256 tokenId,
-        uint256 amount
-    ) external view returns (uint256 price);
-
-    function getFeeAmount(
-        Action action,
-        bytes calldata tokenData,
+        IMetadata metadata,
+        uint256 metadataId,
         uint256 amount
     ) external view returns (uint256 price);
 

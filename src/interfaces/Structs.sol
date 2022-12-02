@@ -49,7 +49,7 @@ struct Meta {
 
 struct Property {
     address creator;
-    IRuleset rule;
+    IRuleset ruleset;
     IMetadata metadata;
     uint256 metadataId;
 }

@@ -45,7 +45,7 @@ error InvalidSigner(address account);
 
 error InvalidCreator(address account);
 
-error InvalidRule(IRuleset rule);
+error InvalidRule(IRuleset ruleset);
 
 error InvalidMetadata(IMetadata metadata);
 

@@ -144,12 +144,21 @@ contract Artwork is IArtwork, ERC1155 {
             revert Uncopiable();
         }
 
+        (IMetadata metadata, uint256 metadataId) = copyright.metadataOf(
+            tokenId
+        );
+
         // pay protocol fee
         _payFee(
             configurator.feeToken(),
             msg.sender,
             configurator.treatury(),
-            configurator.getFeeAmount(Action.ArtworkCopy, tokenId, amount)
+            configurator.getFeeAmount(
+                Action.ArtworkCopy,
+                metadata,
+                metadataId,
+                amount
+            )
         );
 
         // pay royalty fee
@@ -178,12 +187,21 @@ contract Artwork is IArtwork, ERC1155 {
             revert Unburnable();
         }
 
+        (IMetadata metadata, uint256 metadataId) = copyright.metadataOf(
+            tokenId
+        );
+
         // pay protocol fee
         _payFee(
             configurator.feeToken(),
             msg.sender,
             configurator.treatury(),
-            configurator.getFeeAmount(Action.ArtworkBurn, tokenId, amount)
+            configurator.getFeeAmount(
+                Action.ArtworkBurn,
+                metadata,
+                metadataId,
+                amount
+            )
         );
 
         // pay royalty fee

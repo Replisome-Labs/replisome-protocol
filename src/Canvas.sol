@@ -46,18 +46,26 @@ contract Canvas is ICanvas, ERC165, ERC721Receiver, ERC1155Receiver {
 
     function create(
         uint256 amount,
-        IRuleset rule,
+        IRuleset ruleset,
         IMetadata metadata,
         bytes calldata data
     ) external returns (uint256 tokenId) {
+        uint256 metadataId = metadata.create(data);
+
         _payFee(
             configurator.feeToken(),
             msg.sender,
             address(this),
-            configurator.getFeeAmount(Action.CopyrightClaim, data, 1)
+            configurator.getFeeAmount(
+                Action.CopyrightClaim,
+                metadata,
+                metadataId,
+                1
+            )
         );
 
-        tokenId = _createAndClaim(rule, metadata, data);
+        copyright.claim(msg.sender, ruleset, metadata, metadataId);
+        tokenId = copyright.search(metadata, metadataId);
 
         if (amount > 0) {
             _payFee(
@@ -71,27 +79,12 @@ contract Canvas is ICanvas, ERC165, ERC721Receiver, ERC1155Receiver {
                 configurator.feeToken(),
                 msg.sender,
                 address(this),
-                configurator.getFeeAmount(Action.ArtworkCopy, tokenId, amount)
-            );
-
-            artwork.copy(msg.sender, tokenId, amount);
-        }
-    }
-
-    function copy(uint256 tokenId, uint256 amount) external {
-        if (amount > 0) {
-            _payFee(
-                configurator.feeToken(),
-                msg.sender,
-                address(this),
-                configurator.getFeeAmount(Action.ArtworkCopy, tokenId, amount)
-            );
-
-            _payFee(
-                copyright.getRoyaltyToken(Action.ArtworkCopy, tokenId),
-                msg.sender,
-                address(this),
-                copyright.getRoyaltyAmount(Action.ArtworkCopy, tokenId, amount)
+                configurator.getFeeAmount(
+                    Action.ArtworkCopy,
+                    metadata,
+                    metadataId,
+                    amount
+                )
             );
 
             artwork.copy(msg.sender, tokenId, amount);
@@ -99,23 +92,70 @@ contract Canvas is ICanvas, ERC165, ERC721Receiver, ERC1155Receiver {
     }
 
     function waive(uint256 tokenId) external {
+        (IMetadata metadata, uint256 metadataId) = copyright.metadataOf(
+            tokenId
+        );
+
         _payFee(
             configurator.feeToken(),
             msg.sender,
             address(this),
-            configurator.getFeeAmount(Action.CopyrightWaive, tokenId, 1)
+            configurator.getFeeAmount(
+                Action.CopyrightWaive,
+                metadata,
+                metadataId,
+                1
+            )
         );
 
         copyright.waive(tokenId);
     }
 
-    function burn(uint256 tokenId, uint256 amount) external {
+    function copy(uint256 tokenId, uint256 amount) external {
         if (amount > 0) {
+            (IMetadata metadata, uint256 metadataId) = copyright.metadataOf(
+                tokenId
+            );
+
             _payFee(
                 configurator.feeToken(),
                 msg.sender,
                 address(this),
-                configurator.getFeeAmount(Action.ArtworkBurn, tokenId, amount)
+                configurator.getFeeAmount(
+                    Action.ArtworkCopy,
+                    metadata,
+                    metadataId,
+                    amount
+                )
+            );
+
+            _payFee(
+                copyright.getRoyaltyToken(Action.ArtworkCopy, tokenId),
+                msg.sender,
+                address(this),
+                copyright.getRoyaltyAmount(Action.ArtworkCopy, tokenId, amount)
+            );
+
+            artwork.copy(msg.sender, tokenId, amount);
+        }
+    }
+
+    function burn(uint256 tokenId, uint256 amount) external {
+        if (amount > 0) {
+            (IMetadata metadata, uint256 metadataId) = copyright.metadataOf(
+                tokenId
+            );
+
+            _payFee(
+                configurator.feeToken(),
+                msg.sender,
+                address(this),
+                configurator.getFeeAmount(
+                    Action.ArtworkBurn,
+                    metadata,
+                    metadataId,
+                    amount
+                )
             );
 
             _payFee(
@@ -129,14 +169,17 @@ contract Canvas is ICanvas, ERC165, ERC721Receiver, ERC1155Receiver {
         }
     }
 
-    function _createAndClaim(
-        IRuleset rule,
+    /**
+        @dev This function should only be called in dry-run
+     */
+    function estimateFeeAmount(
+        Action action,
+        uint256 amount,
         IMetadata metadata,
         bytes calldata data
-    ) internal returns (uint256 tokenId) {
+    ) external returns (uint256 price) {
         uint256 metadataId = metadata.create(data);
-        copyright.claim(msg.sender, rule, metadata, metadataId);
-        tokenId = copyright.search(metadata, metadataId);
+        price = configurator.getFeeAmount(action, metadata, metadataId, amount);
     }
 
     function _payFee(

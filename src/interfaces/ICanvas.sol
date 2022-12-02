@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.13;
 
-import {Layer} from "./Structs.sol";
+import {Layer, Action} from "./Structs.sol";
 import {IConfigurator} from "./IConfigurator.sol";
 import {ICopyright} from "./ICopyright.sol";
 import {IArtwork} from "./IArtwork.sol";
@@ -20,7 +20,7 @@ interface ICanvas is IERC165, IERC721Receiver, IERC1155Receiver {
 
     function create(
         uint256 amount,
-        IRuleset rule,
+        IRuleset ruleset,
         IMetadata metadata,
         bytes calldata data
     ) external returns (uint256 tokenId);
@@ -30,4 +30,11 @@ interface ICanvas is IERC165, IERC721Receiver, IERC1155Receiver {
     function waive(uint256 tokenId) external;
 
     function burn(uint256 tokenId, uint256 amount) external;
+
+    function estimateFeeAmount(
+        Action action,
+        uint256 amount,
+        IMetadata metadata,
+        bytes calldata data
+    ) external returns (uint256 price);
 }

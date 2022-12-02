@@ -6,6 +6,7 @@ import {IConfigurator} from "./interfaces/IConfigurator.sol";
 import {IERC20} from "./interfaces/IERC20.sol";
 import {ICopyrightRenderer} from "./interfaces/ICopyrightRenderer.sol";
 import {IFeeFormula} from "./interfaces/IFeeFormula.sol";
+import {IMetadata} from "./interfaces/IMetadata.sol";
 import {Owned} from "./libraries/Owned.sol";
 
 contract Configurator is Owned(msg.sender), IConfigurator {
@@ -19,27 +20,15 @@ contract Configurator is Owned(msg.sender), IConfigurator {
 
     function getFeeAmount(
         Action action,
-        uint256 tokenId,
+        IMetadata metadata,
+        uint256 metadataId,
         uint256 amount
     ) external view returns (uint256 price) {
         IFeeFormula feeFormula = fees[action];
         if (address(feeFormula) == address(0)) {
             price = uint256(0);
         } else {
-            price = feeFormula.getPrice(tokenId, amount);
-        }
-    }
-
-    function getFeeAmount(
-        Action action,
-        bytes calldata tokenData,
-        uint256 amount
-    ) external view returns (uint256 price) {
-        IFeeFormula feeFormula = fees[action];
-        if (address(feeFormula) == address(0)) {
-            price = uint256(0);
-        } else {
-            price = feeFormula.estimatePrice(tokenData, amount);
+            price = feeFormula.getPrice(metadata, metadataId, amount);
         }
     }
 

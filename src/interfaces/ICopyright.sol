@@ -13,7 +13,10 @@ import {IERC2981} from "./IERC2981.sol";
 interface ICopyright is IERC721, IERC2981 {
     event PropertyCreated(uint256 indexed tokenId, Property property);
 
-    event PropertyRuleUpdated(uint256 indexed tokenId, IRuleset indexed rule);
+    event PropertyRulesetUpdated(
+        uint256 indexed tokenId,
+        IRuleset indexed ruleset
+    );
 
     function configurator() external view returns (IConfigurator target);
 
@@ -69,12 +72,12 @@ interface ICopyright is IERC721, IERC2981 {
 
     function claim(
         address creator,
-        IRuleset rule,
+        IRuleset ruleset,
         IMetadata metadata,
         uint256 metadataId
     ) external;
 
     function waive(uint256 tokenId) external;
 
-    function updateRule(uint256 tokenId, IRuleset rule) external;
+    function updateRule(uint256 tokenId, IRuleset ruleset) external;
 }

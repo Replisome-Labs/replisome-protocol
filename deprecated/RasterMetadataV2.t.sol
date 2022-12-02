@@ -78,7 +78,7 @@ contract RasterMetadataV2Test is Test {
 
         Property memory property = Property({
             creator: address(this),
-            rule: IRuleset(address(0)),
+            ruleset: IRuleset(address(0)),
             metadata: metadata,
             metadataId: id
         });

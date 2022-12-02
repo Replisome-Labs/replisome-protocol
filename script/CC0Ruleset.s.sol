@@ -10,7 +10,7 @@ contract DeployCC0Rule is Script {
     function run() public {
         vm.startBroadcast();
 
-        CC0Ruleset rule = new CC0Ruleset();
+        CC0Ruleset ruleset = new CC0Ruleset();
 
         vm.stopBroadcast();
 
@@ -22,7 +22,7 @@ contract DeployCC0Rule is Script {
                     "/CC0Ruleset"
                 )
             ),
-            vm.toString(address(rule))
+            vm.toString(address(ruleset))
         );
     }
 }

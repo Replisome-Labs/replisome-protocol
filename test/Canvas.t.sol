@@ -24,7 +24,7 @@ contract CanvasTest is Test, ERC1155Receiver, ERC721Receiver {
     Copyright public copyright;
     Artwork public artwork;
     RasterMetadata public metadata;
-    CC0Ruleset public rule;
+    CC0Ruleset public ruleset;
 
     function setUp() public {
         configurator = new Configurator();
@@ -33,7 +33,7 @@ contract CanvasTest is Test, ERC1155Receiver, ERC721Receiver {
         artwork = new Artwork(configurator, copyright);
         canvas = new Canvas(configurator, copyright, artwork);
         metadata = new RasterMetadata(copyright);
-        rule = new CC0Ruleset();
+        ruleset = new CC0Ruleset();
 
         metadataRegistry.register(metadata);
 
@@ -61,7 +61,7 @@ contract CanvasTest is Test, ERC1155Receiver, ERC721Receiver {
             drawing
         );
 
-        canvas.create(1, rule, metadata, data);
+        canvas.create(1, ruleset, metadata, data);
 
         // emit log(artwork.uri(1));
 
