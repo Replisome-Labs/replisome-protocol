@@ -155,9 +155,9 @@ contract RasterMetadata is IMetadata, ERC165 {
         Meta storage meta = _metaOf[metadataId];
         meta.width = w;
         meta.height = h;
-        _processLayers(meta, layers);
         _processColors(meta, colors);
         _processDrawing(meta, drawing);
+        _processLayers(meta, layers);
 
         bytes memory raw = _getRawData(meta);
         bytes32 metadataHash = keccak256(raw);
@@ -275,10 +275,9 @@ contract RasterMetadata is IMetadata, ERC165 {
         view
         returns (bytes memory raw)
     {
-        bytes memory colorRaw = meta.palette.toBytes();
+        bytes4[] memory colors = meta.palette.getColors();
         RasterEngine.Frame memory frame = _getFrame(meta);
-        bytes memory contentRaw = frame.toBytes();
-        raw = abi.encodePacked(colorRaw, contentRaw);
+        raw = abi.encode(frame.width, frame.height, colors, frame.data);
     }
 
     function _getFrame(Meta storage meta)

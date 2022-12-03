@@ -11,20 +11,6 @@ library RasterEngine {
         mapping(bytes4 => uint8) colorIndexOf;
     }
 
-    function toBytes(Palette storage palette)
-        public
-        view
-        returns (bytes memory raw)
-    {
-        uint8 count = palette.colorCount;
-        raw = abi.encodePacked(raw, count);
-        unchecked {
-            for (uint8 i = 0; i < count; i++) {
-                raw = abi.encodePacked(raw, palette.colorOf[i + 1]);
-            }
-        }
-    }
-
     function getColorIndex(Palette storage palette, bytes4 color)
         public
         view
@@ -57,9 +43,22 @@ library RasterEngine {
     function addColor(Palette storage palette, bytes4 color) public {
         uint8 colorIndex = palette.colorIndexOf[color];
         if (colorIndex == uint8(0)) {
-            colorIndex = ++((palette.colorCount));
-            palette.colorOf[colorIndex] = color;
-            palette.colorIndexOf[color] = colorIndex;
+            unchecked {
+                bytes4 currentColor;
+                for (uint8 i = palette.colorCount; i >= 0; i--) {
+                    currentColor = palette.colorOf[i];
+                    if (uint32(currentColor) <= uint32(color)) {
+                        palette.colorOf[i + 1] = color;
+                        palette.colorIndexOf[color] = i + 1;
+                        break;
+                    } else {
+                        palette.colorOf[i + 1] = currentColor;
+                        palette.colorIndexOf[currentColor] = i + 1;
+                    }
+                }
+            }
+
+            ++palette.colorCount;
         }
     }
 
@@ -78,14 +77,6 @@ library RasterEngine {
         uint256 width;
         uint256 height;
         bytes data;
-    }
-
-    function toBytes(Frame memory frame)
-        internal
-        pure
-        returns (bytes memory raw)
-    {
-        raw = abi.encodePacked(frame.width, frame.height, frame.data);
     }
 
     function addFrame(Frame memory baseFrame, Frame memory layerFrame)
