@@ -4,9 +4,14 @@ pragma solidity ^0.8.13;
 import {IConfigurator} from "./IConfigurator.sol";
 import {ICopyright} from "./ICopyright.sol";
 import {IERC1155} from "./IERC1155.sol";
+import {IERC1155MetadataURI} from "./IERC1155MetadataURI.sol";
 import {IERC2981} from "./IERC2981.sol";
 
-interface IArtwork is IERC1155, IERC2981 {
+interface IArtwork is IERC1155, IERC1155MetadataURI, IERC2981 {
+    event Utilized(address indexed account, uint256[] ids, uint256[] values);
+
+    event Unutilized(address indexed account, uint256[] ids, uint256[] values);
+
     function configurator() external view returns (IConfigurator target);
 
     function copyright() external view returns (ICopyright target);

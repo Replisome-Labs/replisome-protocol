@@ -5,11 +5,13 @@ import {Property, Action} from "../../src/interfaces/Structs.sol";
 import {IConfigurator} from "../../src/interfaces/IConfigurator.sol";
 import {IMetadataRegistry} from "../../src/interfaces/IMetadataRegistry.sol";
 import {ICopyright} from "../../src/interfaces/ICopyright.sol";
+import {IArtwork} from "../../src/interfaces/IArtwork.sol";
 import {IMetadata} from "../../src/interfaces/IMetadata.sol";
 import {IRuleset} from "../../src/interfaces/IRuleset.sol";
 import {IERC165} from "../../src/interfaces/IERC165.sol";
 import {IERC2981} from "../../src/interfaces/IERC2981.sol";
 import {IERC20} from "../../src/interfaces/IERC20.sol";
+import {IERC721Metadata} from "../../src/interfaces/IERC721Metadata.sol";
 import {ERC721} from "../../src/libraries/ERC721.sol";
 
 contract MockCopyright is ICopyright, ERC721("HiggsPixel Copyright", "HPCR") {
@@ -19,6 +21,8 @@ contract MockCopyright is ICopyright, ERC721("HiggsPixel Copyright", "HPCR") {
     IConfigurator public configurator;
 
     IMetadataRegistry public metadataRegistry;
+
+    IArtwork public artwork;
 
     mapping(uint256 => Property) public _propertyInfoOf;
 
@@ -38,6 +42,24 @@ contract MockCopyright is ICopyright, ERC721("HiggsPixel Copyright", "HPCR") {
         Property memory property = _propertyInfoOf[tokenId];
         metadata = property.metadata;
         metadataId = property.metadataId;
+    }
+
+    function creatorOf(uint256 tokenId)
+        external
+        view
+        returns (address creator)
+    {
+        Property storage property = _propertyInfoOf[tokenId];
+        creator = property.creator;
+    }
+
+    function rulesetOf(uint256 tokenId)
+        external
+        view
+        returns (IRuleset ruleset)
+    {
+        Property storage property = _propertyInfoOf[tokenId];
+        ruleset = property.ruleset;
     }
 
     function setPropertyInfo(uint256 tokenId, Property memory property)
@@ -100,7 +122,7 @@ contract MockCopyright is ICopyright, ERC721("HiggsPixel Copyright", "HPCR") {
     function tokenURI(uint256)
         public
         pure
-        override(ERC721)
+        override(IERC721Metadata, ERC721)
         returns (string memory)
     {
         return "hello";

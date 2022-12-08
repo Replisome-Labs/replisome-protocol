@@ -6,16 +6,19 @@ import {Unauthorized, AlreadyMinted, NotMinted, InvalidRule, InvalidMetadata, No
 import {ICopyright} from "./interfaces/ICopyright.sol";
 import {IConfigurator} from "./interfaces/IConfigurator.sol";
 import {IMetadataRegistry} from "./interfaces/IMetadataRegistry.sol";
+import {IArtwork} from "./interfaces/IArtwork.sol";
 import {IMetadata} from "./interfaces/IMetadata.sol";
 import {ICopyrightRenderer} from "./interfaces/ICopyrightRenderer.sol";
 import {IRuleset} from "./interfaces/IRuleset.sol";
 import {IERC165} from "./interfaces/IERC165.sol";
 import {IERC20} from "./interfaces/IERC20.sol";
 import {IERC2981} from "./interfaces/IERC2981.sol";
+import {IERC721Metadata} from "./interfaces/IERC721Metadata.sol";
 import {ERC721} from "./libraries/ERC721.sol";
 import {SafeERC20} from "./libraries/SafeERC20.sol";
 import {ERC165Checker} from "./libraries/ERC165Checker.sol";
 import {CopyrightDescriptor} from "./utils/CopyrightDescriptor.sol";
+import {Artwork} from "./Artwork.sol";
 
 contract Copyright is ICopyright, ERC721("HiggsPixel Copyright", "HPCR") {
     using SafeERC20 for IERC20;
@@ -24,6 +27,8 @@ contract Copyright is ICopyright, ERC721("HiggsPixel Copyright", "HPCR") {
     IConfigurator public immutable configurator;
 
     IMetadataRegistry public immutable metadataRegistry;
+
+    IArtwork public immutable artwork;
 
     uint256 public totalSupply;
 
@@ -40,6 +45,7 @@ contract Copyright is ICopyright, ERC721("HiggsPixel Copyright", "HPCR") {
     ) {
         configurator = configurator_;
         metadataRegistry = metadataRegistry_;
+        artwork = new Artwork(configurator_, this);
     }
 
     function supportsInterface(bytes4 interfaceId)
@@ -58,7 +64,7 @@ contract Copyright is ICopyright, ERC721("HiggsPixel Copyright", "HPCR") {
     function tokenURI(uint256 tokenId)
         public
         view
-        override(ERC721)
+        override(IERC721Metadata, ERC721)
         returns (string memory)
     {
         string memory name = string(
@@ -95,14 +101,6 @@ contract Copyright is ICopyright, ERC721("HiggsPixel Copyright", "HPCR") {
         );
     }
 
-    function propertyInfoOf(uint256 tokenId)
-        public
-        view
-        returns (Property memory property)
-    {
-        property = _propertyInfoOf[tokenId];
-    }
-
     function metadataOf(uint256 tokenId)
         public
         view
@@ -111,6 +109,24 @@ contract Copyright is ICopyright, ERC721("HiggsPixel Copyright", "HPCR") {
         Property storage property = _propertyInfoOf[tokenId];
         metadata = property.metadata;
         metadataId = property.metadataId;
+    }
+
+    function creatorOf(uint256 tokenId)
+        external
+        view
+        returns (address creator)
+    {
+        Property storage property = _propertyInfoOf[tokenId];
+        creator = property.creator;
+    }
+
+    function rulesetOf(uint256 tokenId)
+        external
+        view
+        returns (IRuleset ruleset)
+    {
+        Property storage property = _propertyInfoOf[tokenId];
+        ruleset = property.ruleset;
     }
 
     function canDo(
@@ -173,7 +189,7 @@ contract Copyright is ICopyright, ERC721("HiggsPixel Copyright", "HPCR") {
     function getRoyaltyAmount(
         Action action,
         uint256 tokenId,
-        uint256 value
+        uint256 data
     ) public view returns (uint256 amount) {
         if (!exists(tokenId)) {
             revert NotMinted(tokenId);
@@ -182,7 +198,7 @@ contract Copyright is ICopyright, ERC721("HiggsPixel Copyright", "HPCR") {
         if (address(ruleset) == address(0)) {
             amount = uint256(0);
         } else {
-            amount = ruleset.getRoyaltyAmount(action, value);
+            amount = ruleset.getRoyaltyAmount(action, data);
         }
     }
 
@@ -246,7 +262,7 @@ contract Copyright is ICopyright, ERC721("HiggsPixel Copyright", "HPCR") {
 
             _tokenIdByMetadata[metadata][metadataId] = tokenId;
 
-            emit PropertyCreated(tokenId, property);
+            emit PropertyRulesetUpdated(tokenId, ruleset);
         }
 
         _payFee(

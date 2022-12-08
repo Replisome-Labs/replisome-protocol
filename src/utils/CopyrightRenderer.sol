@@ -28,23 +28,18 @@ contract CopyrightRenderer is ICopyrightRenderer {
         returns (string memory svg)
     {
         address owner = copyright.ownerOf(tokenId);
-        Property memory property = copyright.propertyInfoOf(tokenId);
+        (IMetadata metadata, uint256 metadataId) = copyright.metadataOf(
+            tokenId
+        );
+        address creator = copyright.creatorOf(tokenId);
         svg = string(
             abi.encodePacked(
                 _SVG_START_TAG,
                 _generateSVGDefs(),
                 '<g clip-path="url(#c1)">',
                 _generateSVGStatic(),
-                _generateSVGPreviewImage(
-                    property.metadata,
-                    property.metadataId
-                ),
-                _generateSVGTexts(
-                    tokenId,
-                    owner,
-                    property.creator,
-                    address(property.metadata)
-                ),
+                _generateSVGPreviewImage(metadata, metadataId),
+                _generateSVGTexts(tokenId, owner, creator, address(metadata)),
                 "</g>",
                 _SVG_END_TAG
             )

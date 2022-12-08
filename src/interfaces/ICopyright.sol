@@ -1,18 +1,18 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.13;
 
-import {Property, Action} from "./Structs.sol";
+import {Action} from "./Structs.sol";
+import {IArtwork} from "./IArtwork.sol";
 import {IConfigurator} from "./IConfigurator.sol";
+import {IMetadata} from "./IMetadata.sol";
 import {IMetadataRegistry} from "./IMetadataRegistry.sol";
 import {IRuleset} from "./IRuleset.sol";
-import {IMetadata} from "./IMetadata.sol";
 import {IERC20} from "./IERC20.sol";
 import {IERC721} from "./IERC721.sol";
+import {IERC721Metadata} from "./IERC721Metadata.sol";
 import {IERC2981} from "./IERC2981.sol";
 
-interface ICopyright is IERC721, IERC2981 {
-    event PropertyCreated(uint256 indexed tokenId, Property property);
-
+interface ICopyright is IERC721, IERC721Metadata, IERC2981 {
     event PropertyRulesetUpdated(
         uint256 indexed tokenId,
         IRuleset indexed ruleset
@@ -25,15 +25,19 @@ interface ICopyright is IERC721, IERC2981 {
         view
         returns (IMetadataRegistry target);
 
-    function propertyInfoOf(uint256 tokenId)
-        external
-        view
-        returns (Property memory property);
+    function artwork() external view returns (IArtwork target);
 
     function metadataOf(uint256 tokenId)
         external
         view
         returns (IMetadata metadata, uint256 metadataId);
+
+    function creatorOf(uint256 tokenId) external view returns (address creator);
+
+    function rulesetOf(uint256 tokenId)
+        external
+        view
+        returns (IRuleset ruleset);
 
     function canDo(
         address owner,
@@ -55,7 +59,7 @@ interface ICopyright is IERC721, IERC2981 {
     function getRoyaltyAmount(
         Action action,
         uint256 tokenId,
-        uint256 value
+        uint256 data
     ) external view returns (uint256 amount);
 
     function getIngredients(uint256 tokenId)

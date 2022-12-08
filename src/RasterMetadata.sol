@@ -17,7 +17,7 @@ contract RasterMetadata is IMetadata, ERC165 {
 
     ICopyright public immutable copyright;
 
-    uint256 totalSupply;
+    uint256 public totalSupply;
 
     // mapping from metadataId to Meta
     mapping(uint256 => Meta) internal _metaOf;
@@ -128,7 +128,7 @@ contract RasterMetadata is IMetadata, ERC165 {
         meta.width = w;
         meta.height = h;
         _processColors(meta, colors);
-        _processDrawing(meta, drawing);
+        _processDrawing(meta, colors, drawing);
         _processLayers(meta, layers);
 
         bytes memory raw = _getRawData(meta);
@@ -156,7 +156,7 @@ contract RasterMetadata is IMetadata, ERC165 {
         meta.width = w;
         meta.height = h;
         _processColors(meta, colors);
-        _processDrawing(meta, drawing);
+        _processDrawing(meta, colors, drawing);
         _processLayers(meta, layers);
 
         bytes memory raw = _getRawData(meta);
@@ -168,7 +168,7 @@ contract RasterMetadata is IMetadata, ERC165 {
         _hashToId[metadataHash] = metadataId;
         _idToHash[metadataId] = metadataHash;
 
-        emit Created(metadataId);
+        emit Created(metadataId, raw);
     }
 
     function _parseCreationData(bytes calldata data)
@@ -229,12 +229,23 @@ contract RasterMetadata is IMetadata, ERC165 {
         }
     }
 
-    function _processDrawing(Meta storage meta, bytes memory drawing) internal {
+    function _processDrawing(
+        Meta storage meta,
+        bytes4[] memory colors,
+        bytes memory drawing
+    ) internal {
         if (drawing.length != meta.width * meta.height) {
             revert InvalidDrawing(drawing);
         }
-
-        meta.drawingLayer = drawing;
+        bytes memory corrected = new bytes(drawing.length);
+        unchecked {
+            for (uint256 i = 0; i < drawing.length; i++) {
+                corrected[i] = bytes1(
+                    meta.palette.getColorIndex(colors[uint8(drawing[i]) - 1])
+                );
+            }
+        }
+        meta.drawingLayer = corrected;
     }
 
     function _validateLayer(
@@ -294,20 +305,22 @@ contract RasterMetadata is IMetadata, ERC165 {
         });
 
         Layer[] memory layers = meta.layers;
-        for (uint256 i = 0; i < layers.length; i++) {
-            Layer memory layer = layers[i];
-            Meta storage layerMeta = _getLayerMeta(layer.tokenId);
-            RasterEngine.Frame memory layerFrame = _getFrame(layerMeta);
-            layerFrame.normalizeColors(layerMeta.palette, meta.palette);
-            layerFrame.transformFrame(
-                layer.rotate,
-                layer.flip,
-                layer.translateX,
-                layer.translateY,
-                baseWidth,
-                baseHeight
-            );
-            frame.addFrame(layerFrame);
+        unchecked {
+            for (uint256 i = 0; i < layers.length; i++) {
+                Layer memory layer = layers[i];
+                Meta storage layerMeta = _getLayerMeta(layer.tokenId);
+                RasterEngine.Frame memory layerFrame = _getFrame(layerMeta);
+                layerFrame.normalizeColors(layerMeta.palette, meta.palette);
+                layerFrame.transformFrame(
+                    layer.rotate,
+                    layer.flip,
+                    layer.translateX,
+                    layer.translateY,
+                    baseWidth,
+                    baseHeight
+                );
+                frame.addFrame(layerFrame);
+            }
         }
 
         RasterEngine.Frame memory drawingFrame = RasterEngine.Frame({

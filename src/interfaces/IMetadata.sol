@@ -3,9 +3,14 @@ pragma solidity ^0.8.13;
 
 import {Layer} from "./Structs.sol";
 import {IERC165} from "./IERC165.sol";
+import {ICopyright} from "./ICopyright.sol";
 
 interface IMetadata is IERC165 {
-    event Created(uint256 indexed metadataId);
+    event Created(uint256 indexed metadataId, bytes rawData);
+
+    function copyright() external view returns (ICopyright target);
+
+    function totalSupply() external view returns (uint256 amount);
 
     function generateSVG(uint256 metadataId)
         external
@@ -27,6 +32,11 @@ interface IMetadata is IERC165 {
     function width(uint256 metadataId) external view returns (uint256 w);
 
     function height(uint256 metadataId) external view returns (uint256 h);
+
+    function getColors(uint256 metadataId)
+        external
+        view
+        returns (bytes4[] memory colors);
 
     function getIngredients(uint256 metadataId)
         external

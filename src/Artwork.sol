@@ -2,12 +2,14 @@
 pragma solidity ^0.8.13;
 
 import {Action} from "./interfaces/Structs.sol";
-import {Unauthorized, Untransferable, Uncopiable, Unburnable} from "./interfaces/Errors.sol";
+import {Unauthorized, Untransferable, Uncopiable, Unburnable, LengthMismatch, UnsafeRecipient} from "./interfaces/Errors.sol";
 import {IArtwork} from "./interfaces/IArtwork.sol";
 import {IConfigurator} from "./interfaces/IConfigurator.sol";
 import {ICopyright} from "./interfaces/ICopyright.sol";
 import {IMetadata} from "./interfaces/IMetadata.sol";
 import {IERC1155} from "./interfaces/IERC1155.sol";
+import {IERC1155MetadataURI} from "./interfaces/IERC1155MetadataURI.sol";
+import {IERC1155Receiver} from "./interfaces/IERC1155Receiver.sol";
 import {IERC165} from "./interfaces/IERC165.sol";
 import {IERC20} from "./interfaces/IERC20.sol";
 import {IERC2981} from "./interfaces/IERC2981.sol";
@@ -60,7 +62,7 @@ contract Artwork is IArtwork, ERC1155 {
     function uri(uint256 tokenId)
         public
         view
-        override(ERC1155)
+        override(IERC1155MetadataURI, ERC1155)
         returns (string memory)
     {
         string memory name = string(
@@ -96,6 +98,8 @@ contract Artwork is IArtwork, ERC1155 {
         if (!copyright.canDo(from, Action.ArtworkTransfer, tokenId, amount)) {
             revert Untransferable();
         }
+        ownedBalanceOf[from][tokenId] -= amount;
+        ownedBalanceOf[to][tokenId] += amount;
         super.safeTransferFrom(from, to, tokenId, amount, data);
     }
 
@@ -106,21 +110,50 @@ contract Artwork is IArtwork, ERC1155 {
         uint256[] calldata amounts,
         bytes calldata data
     ) public override(ERC1155, IERC1155) {
-        unchecked {
-            for (uint256 i = 0; i < tokenIds.length; i++) {
-                if (
-                    !copyright.canDo(
-                        from,
-                        Action.ArtworkTransfer,
-                        tokenIds[i],
-                        amounts[i]
-                    )
-                ) {
-                    revert Untransferable();
-                }
+        if (tokenIds.length != amounts.length) {
+            revert LengthMismatch();
+        }
+
+        if (msg.sender != from && !isApprovedForAll[from][msg.sender]) {
+            revert Unauthorized(msg.sender);
+        }
+
+        uint256 id;
+        uint256 amount;
+
+        for (uint256 i = 0; i < tokenIds.length; ) {
+            id = tokenIds[i];
+            amount = amounts[i];
+
+            if (!copyright.canDo(from, Action.ArtworkTransfer, id, amount)) {
+                revert Untransferable();
+            }
+
+            balanceOf[from][id] -= amount;
+            balanceOf[to][id] += amount;
+            ownedBalanceOf[from][id] -= amount;
+            ownedBalanceOf[to][id] += amount;
+
+            unchecked {
+                ++i;
             }
         }
-        super.safeBatchTransferFrom(from, to, tokenIds, amounts, data);
+
+        emit TransferBatch(msg.sender, from, to, tokenIds, amounts);
+
+        if (
+            to.code.length == 0
+                ? to == address(0)
+                : IERC1155Receiver(to).onERC1155BatchReceived(
+                    msg.sender,
+                    from,
+                    tokenIds,
+                    amounts,
+                    data
+                ) != IERC1155Receiver.onERC1155BatchReceived.selector
+        ) {
+            revert UnsafeRecipient(to);
+        }
     }
 
     function usedBalanceOf(address account, uint256 tokenId)
@@ -226,13 +259,21 @@ contract Artwork is IArtwork, ERC1155 {
             uint256[] memory ingredientIds,
             uint256[] memory ingredientAmounts
         ) = copyright.getIngredients(tokenId);
-        uint256[] memory usedAmounts = new uint256[](ingredientAmounts.length);
-        unchecked {
-            for (uint256 i = 0; i < ingredientAmounts.length; i++) {
+
+        uint256 idsLength = ingredientIds.length;
+        if (idsLength > 0) {
+            uint256[] memory usedAmounts = new uint256[](idsLength);
+
+            for (uint256 i = 0; i < idsLength; ) {
                 usedAmounts[i] = ingredientAmounts[i] * amount;
+                balanceOf[account][ingredientIds[i]] -= usedAmounts[i];
+                unchecked {
+                    ++i;
+                }
             }
+
+            emit Utilized(account, ingredientIds, usedAmounts);
         }
-        _batchBurn(account, ingredientIds, usedAmounts);
     }
 
     function _recycle(
@@ -244,13 +285,21 @@ contract Artwork is IArtwork, ERC1155 {
             uint256[] memory ingredientIds,
             uint256[] memory ingredientAmounts
         ) = copyright.getIngredients(tokenId);
-        uint256[] memory usedAmounts = new uint256[](ingredientAmounts.length);
-        unchecked {
-            for (uint256 i = 0; i < ingredientAmounts.length; i++) {
+
+        uint256 idsLength = ingredientIds.length;
+        if (idsLength > 0) {
+            uint256[] memory usedAmounts = new uint256[](idsLength);
+
+            for (uint256 i = 0; i < idsLength; ) {
                 usedAmounts[i] = ingredientAmounts[i] * amount;
+                balanceOf[account][ingredientIds[i]] += usedAmounts[i];
+                unchecked {
+                    ++i;
+                }
             }
+
+            emit Unutilized(account, ingredientIds, usedAmounts);
         }
-        _batchMint(account, ingredientIds, usedAmounts, "");
     }
 
     function _payFee(

@@ -12,7 +12,7 @@ interface IConfigurator {
 
     event FeeTokenUpdated(IERC20 indexed token);
 
-    event FeeUpdated(Action indexed action, IFeeFormula feeFormula);
+    event FeeUpdated(Action indexed action, IFeeFormula indexed feeFormula);
 
     event CopyrightRendererUpdated(ICopyrightRenderer indexed renderer);
 
