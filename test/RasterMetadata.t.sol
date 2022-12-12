@@ -6,18 +6,21 @@ import {RasterMetadata} from "../src/RasterMetadata.sol";
 import {Property, Layer, Rotate, Flip} from "../src/interfaces/Structs.sol";
 import {IRuleset} from "../src/interfaces/IRuleset.sol";
 import {MockCopyright} from "./mock/MockCopyright.sol";
+import {MockRuleset} from "./mock/MockRuleset.sol";
 
 contract RasterMetadataTest is Test {
     using stdStorage for StdStorage;
 
-    event Created(uint256 indexed metadataId);
+    event Created(uint256 indexed metadataId, bytes rawData);
 
-    MockCopyright public copyright;
+    MockCopyright public mockCopyright;
+    MockRuleset public mockRuleset;
     RasterMetadata public metadata;
 
     function setUp() public {
-        copyright = new MockCopyright();
-        metadata = new RasterMetadata(copyright);
+        mockCopyright = new MockCopyright();
+        mockRuleset = new MockRuleset();
+        metadata = new RasterMetadata(mockCopyright);
     }
 
     function testCreatWithoutLayers() public {
@@ -42,7 +45,7 @@ contract RasterMetadataTest is Test {
         );
 
         vm.expectEmit(true, false, false, false);
-        emit Created(1);
+        emit Created(1, data);
 
         uint256 id = metadata.create(data);
 
@@ -81,7 +84,7 @@ contract RasterMetadataTest is Test {
         );
 
         vm.expectEmit(true, false, false, false);
-        emit Created(2);
+        emit Created(2, data);
 
         uint256 id = metadata.create(data);
 
@@ -112,12 +115,28 @@ contract RasterMetadataTest is Test {
 
         uint256 id = metadata.create(data);
 
-        Property memory property = Property({
-            creator: address(this),
-            ruleset: IRuleset(address(0)),
-            metadata: metadata,
-            metadataId: id
-        });
-        copyright.setPropertyInfo(1, property);
+        stdstore
+            .target(address(mockCopyright))
+            .sig(mockCopyright.creatorOf.selector)
+            .with_key(uint256(1))
+            .checked_write(address(this));
+
+        stdstore
+            .target(address(mockCopyright))
+            .sig(mockCopyright.rulesetOf.selector)
+            .with_key(uint256(1))
+            .checked_write(address(mockRuleset));
+
+        stdstore
+            .target(address(mockCopyright))
+            .sig(mockCopyright._metadataContractOf.selector)
+            .with_key(uint256(1))
+            .checked_write(address(metadata));
+
+        stdstore
+            .target(address(mockCopyright))
+            .sig(mockCopyright._metadataIdOf.selector)
+            .with_key(uint256(1))
+            .checked_write(id);
     }
 }

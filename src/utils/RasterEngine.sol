@@ -41,19 +41,26 @@ library RasterEngine {
     }
 
     function addColor(Palette storage palette, bytes4 color) public {
-        uint8 colorIndex = palette.colorIndexOf[color];
-        if (colorIndex == uint8(0)) {
-            unchecked {
-                bytes4 currentColor;
-                for (uint8 i = palette.colorCount; i >= 0; i--) {
-                    currentColor = palette.colorOf[i];
-                    if (uint32(currentColor) <= uint32(color)) {
-                        palette.colorOf[i + 1] = color;
-                        palette.colorIndexOf[color] = i + 1;
-                        break;
-                    } else {
-                        palette.colorOf[i + 1] = currentColor;
-                        palette.colorIndexOf[currentColor] = i + 1;
+        if (palette.colorIndexOf[color] == uint8(0)) {
+            uint8 colorCount = palette.colorCount;
+            if (colorCount == uint8(0)) {
+                palette.colorOf[1] = color;
+                palette.colorIndexOf[color] = 1;
+            } else {
+                unchecked {
+                    uint8 nextColorIndex;
+                    bytes4 currentColor;
+                    for (uint8 i = colorCount; i > 0; i--) {
+                        nextColorIndex = i + 1;
+                        currentColor = palette.colorOf[i];
+                        if (uint32(currentColor) < uint32(color)) {
+                            palette.colorOf[nextColorIndex] = color;
+                            palette.colorIndexOf[color] = nextColorIndex;
+                            break;
+                        } else {
+                            palette.colorOf[nextColorIndex] = currentColor;
+                            palette.colorIndexOf[currentColor] = nextColorIndex;
+                        }
                     }
                 }
             }

@@ -24,16 +24,24 @@ contract CC0Ruleset is IRuleset, ERC165 {
         ok = false;
     }
 
-    function canTransfer(address, uint256) external pure returns (bool ok) {
-        ok = true;
+    function canTransfer(address) external pure returns (uint256 allowance) {
+        allowance = type(uint256).max;
     }
 
-    function canCopy(address, uint256) external pure returns (bool ok) {
-        ok = true;
+    function canCopy(address) external pure returns (uint256 allowance) {
+        allowance = type(uint256).max;
     }
 
-    function canBurn(address, uint256) external pure returns (bool ok) {
-        ok = true;
+    function canBurn(address) external pure returns (uint256 allowance) {
+        allowance = type(uint256).max;
+    }
+
+    function canUse(address, IRuleset)
+        external
+        pure
+        returns (uint256 allowance)
+    {
+        allowance = type(uint256).max;
     }
 
     function getRoyaltyReceiver(Action)

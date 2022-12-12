@@ -22,6 +22,9 @@ contract RasterMetadata is IMetadata, ERC165 {
     // mapping from metadataId to Meta
     mapping(uint256 => Meta) internal _metaOf;
 
+    // mapping from metadataId to content
+    mapping(uint256 => bytes) internal _contentOf;
+
     // mapping from metadataHash to metadataId
     mapping(bytes32 => uint256) internal _hashToId;
 
@@ -58,12 +61,11 @@ contract RasterMetadata is IMetadata, ERC165 {
         returns (string memory svg)
     {
         Meta storage meta = _metaOf[metadataId];
-        RasterEngine.Frame memory frame = _getFrame(meta);
         RasterRenderer.SVGParams memory params = RasterRenderer.SVGParams({
-            width: frame.width,
-            height: frame.height,
+            width: meta.width,
+            height: meta.height,
             colors: meta.palette.getColors(),
-            data: frame.data
+            data: _contentOf[metadataId]
         });
         svg = RasterRenderer.generateSVG(params);
     }
@@ -73,7 +75,7 @@ contract RasterMetadata is IMetadata, ERC165 {
         view
         returns (bytes memory raw)
     {
-        raw = _getRawData(_metaOf[metadataId]);
+        raw = _contentOf[metadataId];
     }
 
     function exists(uint256 metadataId) public view returns (bool ok) {
@@ -131,7 +133,11 @@ contract RasterMetadata is IMetadata, ERC165 {
         _processDrawing(meta, colors, drawing);
         _processLayers(meta, layers);
 
-        bytes memory raw = _getRawData(meta);
+        RasterEngine.Frame memory frame = _getFrame(meta);
+
+        _contentOf[metadataId] = frame.data;
+
+        bytes memory raw = _getRawData(metadataId);
         bytes32 metadataHash = keccak256(raw);
         metadataId = _hashToId[metadataHash];
 
@@ -159,7 +165,10 @@ contract RasterMetadata is IMetadata, ERC165 {
         _processDrawing(meta, colors, drawing);
         _processLayers(meta, layers);
 
-        bytes memory raw = _getRawData(meta);
+        RasterEngine.Frame memory frame = _getFrame(meta);
+        _contentOf[metadataId] = frame.data;
+
+        bytes memory raw = _getRawData(metadataId);
         bytes32 metadataHash = keccak256(raw);
 
         if (_hashToId[metadataHash] != uint256(0)) {
@@ -240,9 +249,15 @@ contract RasterMetadata is IMetadata, ERC165 {
         bytes memory corrected = new bytes(drawing.length);
         unchecked {
             for (uint256 i = 0; i < drawing.length; i++) {
-                corrected[i] = bytes1(
-                    meta.palette.getColorIndex(colors[uint8(drawing[i]) - 1])
-                );
+                uint8 colorIndex = uint8(drawing[i]);
+
+                if (colorIndex > uint8(0)) {
+                    colorIndex = meta.palette.getColorIndex(
+                        colors[colorIndex - 1]
+                    );
+                }
+
+                corrected[i] = bytes1(colorIndex);
             }
         }
         meta.drawingLayer = corrected;
@@ -281,14 +296,19 @@ contract RasterMetadata is IMetadata, ERC165 {
         }
     }
 
-    function _getRawData(Meta storage meta)
+    function _getRawData(uint256 metadataId)
         internal
         view
         returns (bytes memory raw)
     {
+        Meta storage meta = _metaOf[metadataId];
         bytes4[] memory colors = meta.palette.getColors();
-        RasterEngine.Frame memory frame = _getFrame(meta);
-        raw = abi.encode(frame.width, frame.height, colors, frame.data);
+        raw = abi.encode(
+            meta.width,
+            meta.height,
+            colors,
+            _contentOf[metadataId]
+        );
     }
 
     function _getFrame(Meta storage meta)
@@ -308,8 +328,10 @@ contract RasterMetadata is IMetadata, ERC165 {
         unchecked {
             for (uint256 i = 0; i < layers.length; i++) {
                 Layer memory layer = layers[i];
-                Meta storage layerMeta = _getLayerMeta(layer.tokenId);
-                RasterEngine.Frame memory layerFrame = _getFrame(layerMeta);
+                (
+                    Meta storage layerMeta,
+                    RasterEngine.Frame memory layerFrame
+                ) = _getLayerMeta(layer.tokenId);
                 layerFrame.normalizeColors(layerMeta.palette, meta.palette);
                 layerFrame.transformFrame(
                     layer.rotate,
@@ -334,9 +356,14 @@ contract RasterMetadata is IMetadata, ERC165 {
     function _getLayerMeta(uint256 tokenId)
         internal
         view
-        returns (Meta storage meta)
+        returns (Meta storage meta, RasterEngine.Frame memory frame)
     {
         (, uint256 metadataId) = copyright.metadataOf(tokenId);
         meta = _metaOf[metadataId];
+        frame = RasterEngine.Frame({
+            width: meta.width,
+            height: meta.height,
+            data: _contentOf[metadataId]
+        });
     }
 }

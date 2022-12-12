@@ -39,13 +39,6 @@ interface ICopyright is IERC721, IERC721Metadata, IERC2981 {
         view
         returns (IRuleset ruleset);
 
-    function canDo(
-        address owner,
-        Action action,
-        uint256 tokenId,
-        uint256 amount
-    ) external view returns (bool ok);
-
     function getRoyaltyToken(Action action, uint256 tokenId)
         external
         view

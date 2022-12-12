@@ -5,6 +5,7 @@ import "forge-std/Test.sol";
 import {MetadataRegistry} from "../src/MetadataRegistry.sol";
 import {IMetadata} from "../src/interfaces/IMetadata.sol";
 import {Unauthorized, AlreadyRegisteredMetadata, NotRegisteredMetadata} from "../src/interfaces/Errors.sol";
+import {MockMetadata} from "./mock/MockMetadata.sol";
 
 contract MetadataRegistryTest is Test {
     using stdStorage for StdStorage;
@@ -16,10 +17,11 @@ contract MetadataRegistryTest is Test {
     MetadataRegistry public metadataRegistry;
 
     address public constant prankAddress = address(0);
-    IMetadata public constant mockMetadata = IMetadata(address(100));
+    IMetadata public mockMetadata;
 
     function setUp() public {
         metadataRegistry = new MetadataRegistry();
+        mockMetadata = new MockMetadata();
     }
 
     function testRegister() public {

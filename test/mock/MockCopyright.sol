@@ -24,53 +24,38 @@ contract MockCopyright is ICopyright, ERC721("HiggsPixel Copyright", "HPCR") {
 
     IArtwork public artwork;
 
-    mapping(uint256 => Property) public _propertyInfoOf;
+    mapping(uint256 => IMetadata) public _metadataContractOf;
 
-    function propertyInfoOf(uint256 tokenId)
-        external
-        view
-        returns (Property memory property)
-    {
-        property = _propertyInfoOf[tokenId];
-    }
+    mapping(uint256 => uint256) public _metadataIdOf;
 
     function metadataOf(uint256 tokenId)
         external
         view
         returns (IMetadata metadata, uint256 metadataId)
     {
-        Property memory property = _propertyInfoOf[tokenId];
-        metadata = property.metadata;
-        metadataId = property.metadataId;
+        metadata = _metadataContractOf[tokenId];
+        metadataId = _metadataIdOf[tokenId];
     }
+
+    mapping(uint256 => address) public _creatorOf;
 
     function creatorOf(uint256 tokenId)
         external
         view
         returns (address creator)
     {
-        Property storage property = _propertyInfoOf[tokenId];
-        creator = property.creator;
+        creator = _creatorOf[tokenId];
     }
+
+    mapping(uint256 => IRuleset) public _rulesetOf;
 
     function rulesetOf(uint256 tokenId)
         external
         view
         returns (IRuleset ruleset)
     {
-        Property storage property = _propertyInfoOf[tokenId];
-        ruleset = property.ruleset;
+        ruleset = _rulesetOf[tokenId];
     }
-
-    function setPropertyInfo(uint256 tokenId, Property memory property)
-        external
-    {
-        _propertyInfoOf[tokenId] = property;
-    }
-
-    // mapping from owner to action to tokenId to amount to ok
-    mapping(address => mapping(Action => mapping(uint256 => mapping(uint256 => bool))))
-        public canDo;
 
     // mapping from action to tokenId to token
     mapping(Action => mapping(uint256 => IERC20)) public getRoyaltyToken;

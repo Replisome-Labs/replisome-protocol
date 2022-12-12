@@ -2,7 +2,7 @@
 pragma solidity ^0.8.13;
 
 import {Property, Layer, Action} from "./interfaces/Structs.sol";
-import {Unauthorized, AlreadyMinted, NotMinted, InvalidRule, InvalidMetadata, NotRegisteredMetadata, InexistenceMetadata} from "./interfaces/Errors.sol";
+import {Unauthorized, AlreadyMinted, NotMinted, InvalidRule, InvalidMetadata, InexistenceMetadata, Unusable} from "./interfaces/Errors.sol";
 import {ICopyright} from "./interfaces/ICopyright.sol";
 import {IConfigurator} from "./interfaces/IConfigurator.sol";
 import {IMetadataRegistry} from "./interfaces/IMetadataRegistry.sol";
@@ -129,31 +129,6 @@ contract Copyright is ICopyright, ERC721("HiggsPixel Copyright", "HPCR") {
         ruleset = property.ruleset;
     }
 
-    function canDo(
-        address owner,
-        Action action,
-        uint256 tokenId,
-        uint256 amount
-    ) public view returns (bool ok) {
-        if (!exists(tokenId)) {
-            revert NotMinted(tokenId);
-        }
-        IRuleset ruleset = _propertyInfoOf[tokenId].ruleset;
-        if (address(ruleset) == address(0)) {
-            // All permission is open if ruleset is empty
-            ok = true;
-        }
-        if (action == Action.ArtworkTransfer) {
-            ok = ruleset.canTransfer(owner, amount);
-        }
-        if (action == Action.ArtworkCopy) {
-            ok = ruleset.canCopy(owner, amount);
-        }
-        if (action == Action.ArtworkBurn) {
-            ok = ruleset.canBurn(owner, amount);
-        }
-    }
-
     function getRoyaltyToken(Action action, uint256 tokenId)
         public
         view
@@ -235,14 +210,32 @@ contract Copyright is ICopyright, ERC721("HiggsPixel Copyright", "HPCR") {
         if (!address(ruleset).supportsInterface(type(IRuleset).interfaceId)) {
             revert InvalidRule(ruleset);
         }
-        if (address(metadata) == address(0)) {
+        if (
+            address(metadata) == address(0) ||
+            !metadataRegistry.isRegistered(metadata)
+        ) {
             revert InvalidMetadata(metadata);
-        }
-        if (!metadataRegistry.isRegistered(metadata)) {
-            revert NotRegisteredMetadata(metadata);
         }
         if (!metadata.exists(metadataId)) {
             revert InexistenceMetadata(metadata, metadataId);
+        }
+
+        (
+            uint256[] memory ingredientIds,
+            uint256[] memory ingredientAmounts
+        ) = metadata.getIngredients(metadataId);
+        unchecked {
+            for (uint256 i = 0; i < ingredientIds.length; i++) {
+                IRuleset ingredientRuleset = _propertyInfoOf[ingredientIds[i]]
+                    .ruleset;
+                if (
+                    address(ingredientRuleset) != address(0) &&
+                    ingredientRuleset.canUse(creator, ruleset) <
+                    ingredientAmounts[i]
+                ) {
+                    revert Unusable(ingredientIds[i]);
+                }
+            }
         }
 
         uint256 tokenId = _tokenIdByMetadata[metadata][metadataId];

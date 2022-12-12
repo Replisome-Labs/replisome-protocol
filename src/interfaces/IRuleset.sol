@@ -8,20 +8,19 @@ import {Action} from "./Structs.sol";
 interface IRuleset is IERC165 {
     function isUpgradable() external view returns (bool ok);
 
-    function canTransfer(address actor, uint256 amount)
+    function canTransfer(address actor)
         external
         view
-        returns (bool ok);
+        returns (uint256 allowance);
 
-    function canCopy(address actor, uint256 amount)
-        external
-        view
-        returns (bool ok);
+    function canCopy(address actor) external view returns (uint256 allowance);
 
-    function canBurn(address actor, uint256 amount)
+    function canBurn(address actor) external view returns (uint256 allowance);
+
+    function canUse(address actor, IRuleset ruleset)
         external
         view
-        returns (bool ok);
+        returns (uint256 allownace);
 
     function getRoyaltyReceiver(Action action)
         external

@@ -26,6 +26,33 @@ interface IArtwork is IERC1155, IERC1155MetadataURI, IERC2981 {
         view
         returns (uint256 amount);
 
+    function canTransfer(address account, uint256 tokenId)
+        external
+        view
+        returns (uint256 allowance);
+
+    function canCopy(address account, uint256 tokenId)
+        external
+        view
+        returns (uint256 allowance);
+
+    function canBurn(address account, uint256 tokenId)
+        external
+        view
+        returns (uint256 allowance);
+
+    function resetTransferAllowance(address account, uint256 tokenId)
+        external
+        returns (uint256 allowance);
+
+    function resetCopyAllowance(address account, uint256 tokenId)
+        external
+        returns (uint256 allowance);
+
+    function resetBurnAllowance(address account, uint256 tokenId)
+        external
+        returns (uint256 allowance);
+
     function copy(
         address account,
         uint256 tokenId,

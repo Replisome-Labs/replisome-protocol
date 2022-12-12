@@ -53,11 +53,13 @@ error InvalidLayer(Layer layer);
 
 // Artwork
 
-error Untransferable();
+error Untransferable(uint256 tokenId);
 
-error Uncopiable();
+error Uncopiable(uint256 tokenId);
 
-error Unburnable();
+error Unburnable(uint256 tokenId);
+
+error Unusable(uint256 tokenId);
 
 // Metadata
 

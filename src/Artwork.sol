@@ -7,6 +7,7 @@ import {IArtwork} from "./interfaces/IArtwork.sol";
 import {IConfigurator} from "./interfaces/IConfigurator.sol";
 import {ICopyright} from "./interfaces/ICopyright.sol";
 import {IMetadata} from "./interfaces/IMetadata.sol";
+import {IRuleset} from "./interfaces/IRuleset.sol";
 import {IERC1155} from "./interfaces/IERC1155.sol";
 import {IERC1155MetadataURI} from "./interfaces/IERC1155MetadataURI.sol";
 import {IERC1155Receiver} from "./interfaces/IERC1155Receiver.sol";
@@ -16,6 +17,7 @@ import {IERC2981} from "./interfaces/IERC2981.sol";
 import {ERC1155} from "./libraries/ERC1155.sol";
 import {SafeERC20} from "./libraries/SafeERC20.sol";
 import {Strings} from "./libraries/Strings.sol";
+import {Math} from "./libraries/Math.sol";
 import {ArtworkDescriptor} from "./utils/ArtworkDescriptor.sol";
 
 contract Artwork is IArtwork, ERC1155 {
@@ -26,7 +28,17 @@ contract Artwork is IArtwork, ERC1155 {
 
     ICopyright public immutable copyright;
 
+    // mapping from account to tokenId to ownedBalance
     mapping(address => mapping(uint256 => uint256)) public ownedBalanceOf;
+
+    // mapping from account to tokenId to allowance
+    mapping(address => mapping(uint256 => uint256)) public canTransfer;
+
+    // mapping from account to tokenId to allowance
+    mapping(address => mapping(uint256 => uint256)) public canCopy;
+
+    // mapping from account to tokenId to allowance
+    mapping(address => mapping(uint256 => uint256)) public canBurn;
 
     constructor(IConfigurator configurator_, ICopyright copyright_) {
         configurator = configurator_;
@@ -95,9 +107,17 @@ contract Artwork is IArtwork, ERC1155 {
         uint256 amount,
         bytes calldata data
     ) public override(ERC1155, IERC1155) {
-        if (!copyright.canDo(from, Action.ArtworkTransfer, tokenId, amount)) {
-            revert Untransferable();
+        uint256 allowed = canTransfer[from][tokenId];
+        if (allowed < amount) {
+            allowed = resetTransferAllowance(from, tokenId);
         }
+        if (allowed < amount) {
+            revert Untransferable(tokenId);
+        }
+        if (allowed != type(uint256).max) {
+            canTransfer[from][tokenId] = allowed - amount;
+        }
+
         ownedBalanceOf[from][tokenId] -= amount;
         ownedBalanceOf[to][tokenId] += amount;
         super.safeTransferFrom(from, to, tokenId, amount, data);
@@ -125,8 +145,15 @@ contract Artwork is IArtwork, ERC1155 {
             id = tokenIds[i];
             amount = amounts[i];
 
-            if (!copyright.canDo(from, Action.ArtworkTransfer, id, amount)) {
-                revert Untransferable();
+            uint256 allowed = canTransfer[from][id];
+            if (allowed < amount) {
+                allowed = resetTransferAllowance(from, id);
+            }
+            if (allowed < amount) {
+                revert Untransferable(id);
+            }
+            if (allowed != type(uint256).max) {
+                canTransfer[from][id] = allowed - amount;
             }
 
             balanceOf[from][id] -= amount;
@@ -164,6 +191,78 @@ contract Artwork is IArtwork, ERC1155 {
         amount = ownedBalanceOf[account][tokenId] - balanceOf[account][tokenId];
     }
 
+    function resetTransferAllowance(address account, uint256 tokenId)
+        public
+        returns (uint256 allowance)
+    {
+        allowance = type(uint256).max; // permission is open by default
+
+        (uint256[] memory ingredientIds, ) = copyright.getIngredients(tokenId);
+        unchecked {
+            for (uint256 i = 0; i < ingredientIds.length; i++) {
+                allowance = Math.min(
+                    allowance,
+                    canTransfer[account][ingredientIds[i]]
+                );
+            }
+        }
+
+        IRuleset ruleset = copyright.rulesetOf(tokenId);
+        if (address(ruleset) != address(0)) {
+            allowance = Math.min(allowance, ruleset.canTransfer(account));
+        }
+
+        canTransfer[account][tokenId] = allowance;
+    }
+
+    function resetCopyAllowance(address account, uint256 tokenId)
+        public
+        returns (uint256 allowance)
+    {
+        allowance = type(uint256).max; // permission is open by default
+
+        (uint256[] memory ingredientIds, ) = copyright.getIngredients(tokenId);
+        unchecked {
+            for (uint256 i = 0; i < ingredientIds.length; i++) {
+                allowance = Math.min(
+                    allowance,
+                    canCopy[account][ingredientIds[i]]
+                );
+            }
+        }
+
+        IRuleset ruleset = copyright.rulesetOf(tokenId);
+        if (address(ruleset) != address(0)) {
+            allowance = Math.min(allowance, ruleset.canCopy(account));
+        }
+
+        canCopy[account][tokenId] = allowance;
+    }
+
+    function resetBurnAllowance(address account, uint256 tokenId)
+        public
+        returns (uint256 allowance)
+    {
+        allowance = type(uint256).max; // permission is open by default
+
+        (uint256[] memory ingredientIds, ) = copyright.getIngredients(tokenId);
+        unchecked {
+            for (uint256 i = 0; i < ingredientIds.length; i++) {
+                allowance = Math.min(
+                    allowance,
+                    canBurn[account][ingredientIds[i]]
+                );
+            }
+        }
+
+        IRuleset ruleset = copyright.rulesetOf(tokenId);
+        if (address(ruleset) != address(0)) {
+            allowance = Math.min(allowance, ruleset.canBurn(account));
+        }
+
+        canBurn[account][tokenId] = allowance;
+    }
+
     function copy(
         address account,
         uint256 tokenId,
@@ -173,8 +272,15 @@ contract Artwork is IArtwork, ERC1155 {
             revert Unauthorized(msg.sender);
         }
 
-        if (!copyright.canDo(account, Action.ArtworkCopy, tokenId, amount)) {
-            revert Uncopiable();
+        uint256 allowed = canCopy[account][tokenId];
+        if (allowed < amount) {
+            allowed = resetCopyAllowance(account, tokenId);
+        }
+        if (allowed < amount) {
+            revert Uncopiable(tokenId);
+        }
+        if (allowed != type(uint256).max) {
+            canCopy[account][tokenId] = allowed - amount;
         }
 
         (IMetadata metadata, uint256 metadataId) = copyright.metadataOf(
@@ -216,8 +322,15 @@ contract Artwork is IArtwork, ERC1155 {
             revert Unauthorized(msg.sender);
         }
 
-        if (!copyright.canDo(account, Action.ArtworkBurn, tokenId, amount)) {
-            revert Unburnable();
+        uint256 allowed = canCopy[account][tokenId];
+        if (allowed < amount) {
+            allowed = resetBurnAllowance(account, tokenId);
+        }
+        if (allowed < amount) {
+            revert Unburnable(tokenId);
+        }
+        if (allowed != type(uint256).max) {
+            canBurn[account][tokenId] = allowed - amount;
         }
 
         (IMetadata metadata, uint256 metadataId) = copyright.metadataOf(
