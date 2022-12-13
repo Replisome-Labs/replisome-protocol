@@ -2,13 +2,13 @@
 pragma solidity ^0.8.13;
 
 import "forge-std/Script.sol";
-import {Canvas} from "../src/Canvas.sol";
-import {IConfigurator} from "../src/interfaces/IConfigurator.sol";
-import {ICopyright} from "../src/interfaces/ICopyright.sol";
+import {Copyright} from "../src/Copyright.sol";
 import {IArtwork} from "../src/interfaces/IArtwork.sol";
+import {IConfigurator} from "../src/interfaces/IConfigurator.sol";
+import {IMetadataRegistry} from "../src/interfaces/IMetadataRegistry.sol";
 import {DeployHelper} from "./DeployHelper.sol";
 
-contract DeployCanvas is Script {
+contract DeployCopyright is Script {
     function setUp() public {}
 
     function run() public {
@@ -22,21 +22,12 @@ contract DeployCanvas is Script {
             )
         );
 
-        string memory copyrightAddress = vm.readFile(
+        string memory metadataRegistryAddress = vm.readFile(
             string(
                 abi.encodePacked(
                     "./addresses/",
                     vm.toString(block.chainid),
-                    "/Copyright"
-                )
-            )
-        );
-        string memory artworkAddress = vm.readFile(
-            string(
-                abi.encodePacked(
-                    "./addresses/",
-                    vm.toString(block.chainid),
-                    "/Artwork"
+                    "/MetadataRegistry"
                 )
             )
         );
@@ -44,14 +35,14 @@ contract DeployCanvas is Script {
         IConfigurator configurator = IConfigurator(
             DeployHelper.parseAddress(configuratorAddress)
         );
-        ICopyright copyright = ICopyright(
-            DeployHelper.parseAddress(copyrightAddress)
+        IMetadataRegistry metadataRegistry = IMetadataRegistry(
+            DeployHelper.parseAddress(metadataRegistryAddress)
         );
-        IArtwork artwork = IArtwork(DeployHelper.parseAddress(artworkAddress));
 
         vm.startBroadcast();
 
-        Canvas canvas = new Canvas(configurator, copyright, artwork);
+        Copyright copyright = new Copyright(configurator, metadataRegistry);
+        IArtwork artwork = copyright.artwork();
 
         vm.stopBroadcast();
 
@@ -60,10 +51,21 @@ contract DeployCanvas is Script {
                 abi.encodePacked(
                     "./addresses/",
                     vm.toString(block.chainid),
-                    "/Canvas"
+                    "/Copyright"
                 )
             ),
-            vm.toString(address(canvas))
+            vm.toString(address(copyright))
+        );
+
+        vm.writeFile(
+            string(
+                abi.encodePacked(
+                    "./addresses/",
+                    vm.toString(block.chainid),
+                    "/Artwork"
+                )
+            ),
+            vm.toString(address(artwork))
         );
     }
 }

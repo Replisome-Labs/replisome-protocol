@@ -2,15 +2,15 @@
 pragma solidity ^0.8.13;
 
 import "forge-std/Script.sol";
-import {CC0Ruleset} from "../src/rulesets/CC0Ruleset.sol";
+import {MetadataRegistry} from "../src/MetadataRegistry.sol";
 
-contract DeployCC0Ruleset is Script {
+contract DeployMetadataRegistry is Script {
     function setUp() public {}
 
     function run() public {
         vm.startBroadcast();
 
-        CC0Ruleset ruleset = new CC0Ruleset();
+        MetadataRegistry metadataRegistry = new MetadataRegistry();
 
         vm.stopBroadcast();
 
@@ -19,10 +19,10 @@ contract DeployCC0Ruleset is Script {
                 abi.encodePacked(
                     "./addresses/",
                     vm.toString(block.chainid),
-                    "/CC0Ruleset"
+                    "/MetadataRegistry"
                 )
             ),
-            vm.toString(address(ruleset))
+            vm.toString(address(metadataRegistry))
         );
     }
 }

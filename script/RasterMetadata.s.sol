@@ -14,7 +14,7 @@ contract DeployRasterMetadata is Script {
         string memory metadataRegistryAddress = vm.readFile(
             string(
                 abi.encodePacked(
-                    "./data/",
+                    "./addresses/",
                     vm.toString(block.chainid),
                     "/MetadataRegistry"
                 )
@@ -23,7 +23,7 @@ contract DeployRasterMetadata is Script {
         string memory copyrightAddress = vm.readFile(
             string(
                 abi.encodePacked(
-                    "./data/",
+                    "./addresses/",
                     vm.toString(block.chainid),
                     "/Copyright"
                 )
@@ -47,7 +47,7 @@ contract DeployRasterMetadata is Script {
         vm.writeFile(
             string(
                 abi.encodePacked(
-                    "./data/",
+                    "./addresses/",
                     vm.toString(block.chainid),
                     "/RasterMetadata"
                 )
