@@ -30,11 +30,4 @@ interface ICanvas is IERC165, IERC721Receiver, IERC1155Receiver {
     function waive(uint256 tokenId) external;
 
     function burn(uint256 tokenId, uint256 amount) external;
-
-    function estimateFeeAmount(
-        Action action,
-        uint256 amount,
-        IMetadata metadata,
-        bytes calldata data
-    ) external returns (uint256 price);
 }

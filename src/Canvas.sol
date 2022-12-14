@@ -50,19 +50,13 @@ contract Canvas is ICanvas, ERC165, ERC721Receiver, ERC1155Receiver {
         IMetadata metadata,
         bytes calldata data
     ) external returns (uint256 tokenId) {
-        uint256 metadataId = metadata.create(data);
-
-        _payFee(
-            configurator.feeToken(),
-            msg.sender,
-            address(this),
-            configurator.getFeeAmount(
-                Action.CopyrightClaim,
-                metadata,
-                metadataId,
-                1
-            )
+        (uint256 metadataId, , , uint256 allFee) = createAndAppraise(
+            amount,
+            metadata,
+            data
         );
+
+        _payFee(configurator.feeToken(), msg.sender, address(this), allFee);
 
         copyright.claim(msg.sender, ruleset, metadata, metadataId);
         tokenId = copyright.search(metadata, metadataId);
@@ -73,18 +67,6 @@ contract Canvas is ICanvas, ERC165, ERC721Receiver, ERC1155Receiver {
                 msg.sender,
                 address(this),
                 copyright.getRoyaltyAmount(Action.ArtworkCopy, tokenId, amount)
-            );
-
-            _payFee(
-                configurator.feeToken(),
-                msg.sender,
-                address(this),
-                configurator.getFeeAmount(
-                    Action.ArtworkCopy,
-                    metadata,
-                    metadataId,
-                    amount
-                )
             );
 
             artwork.copy(msg.sender, tokenId, amount);
@@ -169,17 +151,33 @@ contract Canvas is ICanvas, ERC165, ERC721Receiver, ERC1155Receiver {
         }
     }
 
-    /**
-        @dev This function should only be called in dry-run
-     */
-    function estimateFeeAmount(
-        Action action,
+    function createAndAppraise(
         uint256 amount,
         IMetadata metadata,
         bytes calldata data
-    ) external returns (uint256 price) {
-        uint256 metadataId = metadata.create(data);
-        price = configurator.getFeeAmount(action, metadata, metadataId, amount);
+    )
+        public
+        returns (
+            uint256 metadataId,
+            uint256 claimFee,
+            uint256 copyFee,
+            uint256 allFee
+        )
+    {
+        metadataId = metadata.create(data);
+        claimFee = configurator.getFeeAmount(
+            Action.CopyrightClaim,
+            metadata,
+            metadataId,
+            1
+        );
+        copyFee = configurator.getFeeAmount(
+            Action.ArtworkCopy,
+            metadata,
+            metadataId,
+            amount
+        );
+        allFee = claimFee + copyFee;
     }
 
     function _payFee(
