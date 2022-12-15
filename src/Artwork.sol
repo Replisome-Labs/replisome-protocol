@@ -8,6 +8,7 @@ import {IConfigurator} from "./interfaces/IConfigurator.sol";
 import {ICopyright} from "./interfaces/ICopyright.sol";
 import {IMetadata} from "./interfaces/IMetadata.sol";
 import {IRuleset} from "./interfaces/IRuleset.sol";
+import {INFTRenderer} from "./interfaces/INFTRenderer.sol";
 import {IERC1155} from "./interfaces/IERC1155.sol";
 import {IERC1155MetadataURI} from "./interfaces/IERC1155MetadataURI.sol";
 import {IERC1155Receiver} from "./interfaces/IERC1155Receiver.sol";
@@ -18,7 +19,7 @@ import {ERC1155} from "./libraries/ERC1155.sol";
 import {SafeERC20} from "./libraries/SafeERC20.sol";
 import {Strings} from "./libraries/Strings.sol";
 import {Math} from "./libraries/Math.sol";
-import {ArtworkDescriptor} from "./utils/ArtworkDescriptor.sol";
+import {NFTDescriptor} from "./utils/NFTDescriptor.sol";
 
 contract Artwork is IArtwork, ERC1155 {
     using SafeERC20 for IERC20;
@@ -90,14 +91,15 @@ contract Artwork is IArtwork, ERC1155 {
         (IMetadata metadata, uint256 metadataId) = copyright.metadataOf(
             tokenId
         );
-        ArtworkDescriptor.TokenURIParams memory params = ArtworkDescriptor
-            .TokenURIParams({
-                name: name,
-                description: description,
-                metadata: metadata,
-                metadataId: metadataId
-            });
-        return ArtworkDescriptor.constructTokenURI(params);
+        return
+            NFTDescriptor.constructTokenURI(
+                NFTDescriptor.TokenURIParams({
+                    name: name,
+                    description: description,
+                    renderer: INFTRenderer(address(metadata)),
+                    id: metadataId
+                })
+            );
     }
 
     function safeTransferFrom(

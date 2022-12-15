@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.13;
 
-import {IFeeFormula} from "./interfaces/IFeeFormula.sol";
-import {IMetadata} from "./interfaces/IMetadata.sol";
+import {IFeeFormula} from "../interfaces/IFeeFormula.sol";
+import {IMetadata} from "../interfaces/IMetadata.sol";
 
 contract ConstantFeeFormula is IFeeFormula {
     uint256 public immutable price;

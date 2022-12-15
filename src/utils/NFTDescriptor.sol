@@ -1,15 +1,15 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.13;
 
-import {IMetadata} from "../interfaces/IMetadata.sol";
+import {INFTRenderer} from "../interfaces/INFTRenderer.sol";
 import {Base64} from "../libraries/Base64.sol";
 
-library ArtworkDescriptor {
+library NFTDescriptor {
     struct TokenURIParams {
         string name;
         string description;
-        IMetadata metadata;
-        uint256 metadataId;
+        INFTRenderer renderer;
+        uint256 id;
     }
 
     /**
@@ -20,10 +20,7 @@ library ArtworkDescriptor {
         view
         returns (string memory)
     {
-        string memory image = generateSVGImage(
-            params.metadata,
-            params.metadataId
-        );
+        string memory image = generateSVGImage(params.renderer, params.id);
 
         // prettier-ignore
         return string(
@@ -39,13 +36,17 @@ library ArtworkDescriptor {
     }
 
     /**
-     * @notice Generate an SVG image for use in the ERC721 token URI.
+     * @notice Generate an SVG image for use in the NFT URI.
      */
-    function generateSVGImage(IMetadata metadata, uint256 metadataId)
+    function generateSVGImage(INFTRenderer renderer, uint256 id)
         public
         view
         returns (string memory svg)
     {
-        return Base64.encode(bytes(metadata.generateSVG(metadataId)));
+        if (address(renderer) == address(0)) {
+            svg = "";
+        } else {
+            svg = Base64.encode(bytes(renderer.generateSVG(id)));
+        }
     }
 }

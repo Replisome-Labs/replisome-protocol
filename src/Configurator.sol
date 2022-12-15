@@ -4,13 +4,13 @@ pragma solidity ^0.8.13;
 import {Action} from "./interfaces/Structs.sol";
 import {IConfigurator} from "./interfaces/IConfigurator.sol";
 import {IERC20} from "./interfaces/IERC20.sol";
-import {ICopyrightRenderer} from "./interfaces/ICopyrightRenderer.sol";
+import {INFTRenderer} from "./interfaces/INFTRenderer.sol";
 import {IFeeFormula} from "./interfaces/IFeeFormula.sol";
 import {IMetadata} from "./interfaces/IMetadata.sol";
 import {Owned} from "./libraries/Owned.sol";
 
 contract Configurator is Owned(msg.sender), IConfigurator {
-    ICopyrightRenderer public copyrightRenderer;
+    INFTRenderer public copyrightRenderer;
 
     address public treatury;
 
@@ -50,10 +50,7 @@ contract Configurator is Owned(msg.sender), IConfigurator {
         emit FeeTokenUpdated(token);
     }
 
-    function setCopyrightRenderer(ICopyrightRenderer renderer)
-        external
-        onlyOwner
-    {
+    function setCopyrightRenderer(INFTRenderer renderer) external onlyOwner {
         copyrightRenderer = renderer;
         emit CopyrightRendererUpdated(renderer);
     }

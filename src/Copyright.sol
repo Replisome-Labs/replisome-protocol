@@ -8,7 +8,6 @@ import {IConfigurator} from "./interfaces/IConfigurator.sol";
 import {IMetadataRegistry} from "./interfaces/IMetadataRegistry.sol";
 import {IArtwork} from "./interfaces/IArtwork.sol";
 import {IMetadata} from "./interfaces/IMetadata.sol";
-import {ICopyrightRenderer} from "./interfaces/ICopyrightRenderer.sol";
 import {IRuleset} from "./interfaces/IRuleset.sol";
 import {IERC165} from "./interfaces/IERC165.sol";
 import {IERC20} from "./interfaces/IERC20.sol";
@@ -17,7 +16,7 @@ import {IERC721Metadata} from "./interfaces/IERC721Metadata.sol";
 import {ERC721} from "./libraries/ERC721.sol";
 import {SafeERC20} from "./libraries/SafeERC20.sol";
 import {ERC165Checker} from "./libraries/ERC165Checker.sol";
-import {CopyrightDescriptor} from "./utils/CopyrightDescriptor.sol";
+import {NFTDescriptor} from "./utils/NFTDescriptor.sol";
 import {Artwork} from "./Artwork.sol";
 
 contract Copyright is ICopyright, ERC721("HiggsPixel Copyright", "HPCR") {
@@ -77,15 +76,15 @@ contract Copyright is ICopyright, ERC721("HiggsPixel Copyright", "HPCR") {
                 " is powered by HiggsPixel"
             )
         );
-        ICopyrightRenderer renderer = configurator.copyrightRenderer();
-        CopyrightDescriptor.TokenURIParams memory params = CopyrightDescriptor
-            .TokenURIParams({
-                name: name,
-                description: description,
-                renderer: renderer,
-                tokenId: tokenId
-            });
-        return CopyrightDescriptor.constructTokenURI(params);
+        return
+            NFTDescriptor.constructTokenURI(
+                NFTDescriptor.TokenURIParams({
+                    name: name,
+                    description: description,
+                    renderer: configurator.copyrightRenderer(),
+                    id: tokenId
+                })
+            );
     }
 
     function royaltyInfo(uint256 tokenId, uint256 salePrice)

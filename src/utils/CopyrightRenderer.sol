@@ -3,12 +3,12 @@ pragma solidity ^0.8.13;
 
 import {Property} from "../interfaces/Structs.sol";
 import {ICopyright} from "../interfaces/ICopyright.sol";
-import {ICopyrightRenderer} from "../interfaces/ICopyrightRenderer.sol";
+import {INFTRenderer} from "../interfaces/INFTRenderer.sol";
 import {IMetadata} from "../interfaces/IMetadata.sol";
 import {Base64} from "../libraries/Base64.sol";
 import {Strings} from "../libraries/Strings.sol";
 
-contract CopyrightRenderer is ICopyrightRenderer {
+contract CopyrightRenderer is INFTRenderer {
     using Strings for uint256;
     using Strings for address;
 

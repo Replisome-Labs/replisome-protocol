@@ -3,7 +3,7 @@ pragma solidity ^0.8.13;
 
 import "forge-std/Script.sol";
 import {Configurator} from "../src/Configurator.sol";
-import {ConstantFeeFormula} from "../src/ConstantFeeFormula.sol";
+import {ConstantFeeFormula} from "../src/fees/ConstantFeeFormula.sol";
 import {Action} from "../src/interfaces/Structs.sol";
 import {IERC20} from "../src/interfaces/IERC20.sol";
 import {DeployHelper} from "./DeployHelper.sol";

@@ -2,13 +2,17 @@
 pragma solidity ^0.8.13;
 
 import "forge-std/Script.sol";
-import {Configurator} from "../src/Configurator.sol";
-import {MetadataRegistry} from "../src/MetadataRegistry.sol";
-import {Copyright} from "../src/Copyright.sol";
-import {ConstantFeeFormula} from "../src/ConstantFeeFormula.sol";
 import {Action} from "../src/interfaces/Structs.sol";
 import {IArtwork} from "../src/interfaces/IArtwork.sol";
 import {IERC20} from "../src/interfaces/IERC20.sol";
+import {IFeeFormula} from "../src/interfaces/IFeeFormula.sol";
+import {INFTRenderer} from "../src/interfaces/INFTRenderer.sol";
+import {ConstantFeeFormula} from "../src/fees/ConstantFeeFormula.sol";
+import {LinearFeeFormula} from "../src/fees/LinearFeeFormula.sol";
+import {CopyrightRenderer} from "../src/utils/CopyrightRenderer.sol";
+import {Configurator} from "../src/Configurator.sol";
+import {MetadataRegistry} from "../src/MetadataRegistry.sol";
+import {Copyright} from "../src/Copyright.sol";
 import {DeployHelper} from "./DeployHelper.sol";
 
 contract DeployCore is Script {
@@ -28,18 +32,20 @@ contract DeployCore is Script {
         vm.startBroadcast();
 
         // configurator
-        ConstantFeeFormula feeFormula = new ConstantFeeFormula(
+        IFeeFormula constantFeeFormula = new ConstantFeeFormula(
             100000000000000000
         );
+        IFeeFormula linearFeeFormula = new LinearFeeFormula(50000000000000000);
+
         Configurator configurator = new Configurator();
         configurator.setTreatury(msg.sender);
         configurator.setFeeToken(
             IERC20(DeployHelper.parseAddress(wavaxAddress))
         );
-        configurator.setFeeFormula(Action.CopyrightClaim, feeFormula);
-        configurator.setFeeFormula(Action.CopyrightWaive, feeFormula);
-        configurator.setFeeFormula(Action.ArtworkCopy, feeFormula);
-        configurator.setFeeFormula(Action.ArtworkBurn, feeFormula);
+        configurator.setFeeFormula(Action.CopyrightClaim, constantFeeFormula);
+        configurator.setFeeFormula(Action.CopyrightWaive, constantFeeFormula);
+        configurator.setFeeFormula(Action.ArtworkCopy, linearFeeFormula);
+        configurator.setFeeFormula(Action.ArtworkBurn, linearFeeFormula);
 
         // MetadataRegistry
         MetadataRegistry metadataRegistry = new MetadataRegistry();
@@ -47,6 +53,9 @@ contract DeployCore is Script {
         // Copyright & Artwork
         Copyright copyright = new Copyright(configurator, metadataRegistry);
         IArtwork artwork = copyright.artwork();
+
+        INFTRenderer copyrightRenderer = new CopyrightRenderer(copyright);
+        configurator.setCopyrightRenderer(copyrightRenderer);
 
         vm.stopBroadcast();
 

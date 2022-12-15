@@ -5,14 +5,14 @@ import "forge-std/Test.sol";
 import {Configurator} from "../src/Configurator.sol";
 import {Unauthorized} from "../src/interfaces/Errors.sol";
 import {IERC20} from "../src/interfaces/IERC20.sol";
-import {ICopyrightRenderer} from "../src/interfaces/ICopyrightRenderer.sol";
+import {INFTRenderer} from "../src/interfaces/INFTRenderer.sol";
 
 contract ConfiguratorTest is Test {
     event TreaturyUpdated(address indexed vault);
 
     event FeeTokenUpdated(IERC20 indexed token);
 
-    event CopyrightRendererUpdated(ICopyrightRenderer indexed renderer);
+    event CopyrightRendererUpdated(INFTRenderer indexed renderer);
 
     Configurator public configurator;
 
@@ -23,8 +23,7 @@ contract ConfiguratorTest is Test {
     uint256 public constant copyrightWaiveFee = uint256(400);
     uint256 public constant artworkCopyFee = uint256(500);
     uint256 public constant artworkBurnFee = uint256(600);
-    ICopyrightRenderer public constant copyrightRenderer =
-        ICopyrightRenderer(address(700));
+    INFTRenderer public constant copyrightRenderer = INFTRenderer(address(700));
 
     function setUp() public {
         configurator = new Configurator();

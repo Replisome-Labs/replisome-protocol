@@ -4,7 +4,7 @@ pragma solidity ^0.8.13;
 import "forge-std/Test.sol";
 import {Artwork} from "../src/Artwork.sol";
 import {Configurator} from "../src/Configurator.sol";
-import {ConstantFeeFormula} from "../src/ConstantFeeFormula.sol";
+import {ConstantFeeFormula} from "../src/fees/ConstantFeeFormula.sol";
 import {Uncopiable, Unburnable} from "../src/interfaces/Errors.sol";
 import {Action} from "../src/interfaces/Structs.sol";
 import {IERC20} from "../src/interfaces/IERC20.sol";

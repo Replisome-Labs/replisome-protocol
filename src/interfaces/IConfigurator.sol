@@ -3,7 +3,7 @@ pragma solidity ^0.8.13;
 
 import {Action} from "./Structs.sol";
 import {IERC20} from "./IERC20.sol";
-import {ICopyrightRenderer} from "./ICopyrightRenderer.sol";
+import {INFTRenderer} from "./INFTRenderer.sol";
 import {IFeeFormula} from "./IFeeFormula.sol";
 import {IMetadata} from "./IMetadata.sol";
 
@@ -14,7 +14,7 @@ interface IConfigurator {
 
     event FeeUpdated(Action indexed action, IFeeFormula indexed feeFormula);
 
-    event CopyrightRendererUpdated(ICopyrightRenderer indexed renderer);
+    event CopyrightRendererUpdated(INFTRenderer indexed renderer);
 
     function treatury() external view returns (address vault);
 
@@ -33,10 +33,7 @@ interface IConfigurator {
 
     function setFeeFormula(Action action, IFeeFormula feeFormula) external;
 
-    function copyrightRenderer()
-        external
-        view
-        returns (ICopyrightRenderer renderer);
+    function copyrightRenderer() external view returns (INFTRenderer renderer);
 
-    function setCopyrightRenderer(ICopyrightRenderer renderer) external;
+    function setCopyrightRenderer(INFTRenderer renderer) external;
 }

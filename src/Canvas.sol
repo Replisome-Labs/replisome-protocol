@@ -50,22 +50,40 @@ contract Canvas is ICanvas, ERC165, ERC721Receiver, ERC1155Receiver {
         IMetadata metadata,
         bytes calldata data
     ) external returns (uint256 tokenId) {
-        (uint256 metadataId, , , uint256 allFee) = createAndAppraise(
-            amount,
-            metadata,
-            data
-        );
+        (uint256 metadataId, , ) = createAndAppraise(amount, metadata, data);
 
-        _payFee(configurator.feeToken(), msg.sender, address(this), allFee);
+        _payFeeTo(
+            configurator.feeToken(),
+            msg.sender,
+            address(copyright),
+            configurator.getFeeAmount(
+                Action.CopyrightClaim,
+                metadata,
+                metadataId,
+                1
+            )
+        );
 
         copyright.claim(msg.sender, ruleset, metadata, metadataId);
         tokenId = copyright.search(metadata, metadataId);
 
         if (amount > 0) {
-            _payFee(
+            _payFeeTo(
+                configurator.feeToken(),
+                msg.sender,
+                address(artwork),
+                configurator.getFeeAmount(
+                    Action.ArtworkCopy,
+                    metadata,
+                    metadataId,
+                    amount
+                )
+            );
+
+            _payFeeTo(
                 copyright.getRoyaltyToken(Action.ArtworkCopy, tokenId),
                 msg.sender,
-                address(this),
+                address(artwork),
                 copyright.getRoyaltyAmount(Action.ArtworkCopy, tokenId, amount)
             );
 
@@ -78,10 +96,10 @@ contract Canvas is ICanvas, ERC165, ERC721Receiver, ERC1155Receiver {
             tokenId
         );
 
-        _payFee(
+        _payFeeTo(
             configurator.feeToken(),
             msg.sender,
-            address(this),
+            address(copyright),
             configurator.getFeeAmount(
                 Action.CopyrightWaive,
                 metadata,
@@ -99,10 +117,10 @@ contract Canvas is ICanvas, ERC165, ERC721Receiver, ERC1155Receiver {
                 tokenId
             );
 
-            _payFee(
+            _payFeeTo(
                 configurator.feeToken(),
                 msg.sender,
-                address(this),
+                address(artwork),
                 configurator.getFeeAmount(
                     Action.ArtworkCopy,
                     metadata,
@@ -111,10 +129,10 @@ contract Canvas is ICanvas, ERC165, ERC721Receiver, ERC1155Receiver {
                 )
             );
 
-            _payFee(
+            _payFeeTo(
                 copyright.getRoyaltyToken(Action.ArtworkCopy, tokenId),
                 msg.sender,
-                address(this),
+                address(artwork),
                 copyright.getRoyaltyAmount(Action.ArtworkCopy, tokenId, amount)
             );
 
@@ -128,10 +146,10 @@ contract Canvas is ICanvas, ERC165, ERC721Receiver, ERC1155Receiver {
                 tokenId
             );
 
-            _payFee(
+            _payFeeTo(
                 configurator.feeToken(),
                 msg.sender,
-                address(this),
+                address(artwork),
                 configurator.getFeeAmount(
                     Action.ArtworkBurn,
                     metadata,
@@ -140,10 +158,10 @@ contract Canvas is ICanvas, ERC165, ERC721Receiver, ERC1155Receiver {
                 )
             );
 
-            _payFee(
+            _payFeeTo(
                 copyright.getRoyaltyToken(Action.ArtworkBurn, tokenId),
                 msg.sender,
-                address(this),
+                address(artwork),
                 copyright.getRoyaltyAmount(Action.ArtworkBurn, tokenId, amount)
             );
 
@@ -160,8 +178,7 @@ contract Canvas is ICanvas, ERC165, ERC721Receiver, ERC1155Receiver {
         returns (
             uint256 metadataId,
             uint256 claimFee,
-            uint256 copyFee,
-            uint256 allFee
+            uint256 copyFee
         )
     {
         metadataId = metadata.create(data);
@@ -177,17 +194,17 @@ contract Canvas is ICanvas, ERC165, ERC721Receiver, ERC1155Receiver {
             metadataId,
             amount
         );
-        allFee = claimFee + copyFee;
     }
 
-    function _payFee(
+    function _payFeeTo(
         IERC20 token,
         address from,
         address to,
         uint256 amount
     ) internal {
         if (address(token) != address(0)) {
-            token.safeTransferFrom(from, to, amount);
+            token.safeTransferFrom(from, address(this), amount);
+            token.safeIncreaseAllowance(to, amount);
         }
     }
 }
