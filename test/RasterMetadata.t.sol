@@ -30,11 +30,7 @@ contract RasterMetadataTest is Test {
 
         bytes memory drawing = new bytes(256);
         for (uint256 i = 0; i < 256; i++) {
-            if (i == 10) {
-                drawing[i] = bytes1(uint8(1));
-            } else {
-                drawing[i] = bytes1(uint8(0));
-            }
+            drawing[i] = bytes1(uint8(1));
         }
         bytes memory data = abi.encode(
             uint256(16),
@@ -47,10 +43,10 @@ contract RasterMetadataTest is Test {
         vm.expectEmit(true, false, false, false);
         emit Created(1, data);
 
-        uint256 id = metadata.create(data);
+        metadata.create(data);
 
-        emit log_bytes(metadata.generateRawData(id));
-        emit log(metadata.generateSVG(id));
+        // emit log_bytes(metadata.generateRawData(id));
+        // emit log(metadata.generateSVG(id));
     }
 
     function testCreateWithLayers() public {

@@ -40,11 +40,10 @@ struct Layer {
 struct Meta {
     uint256 width;
     uint256 height;
-    RasterEngine.Palette palette;
-    Layer[] layers;
     uint256[] ingredients;
     mapping(uint256 => uint256) ingredientAmountOf;
-    bytes drawingLayer;
+    RasterEngine.Palette palette;
+    bytes content;
 }
 
 struct Property {

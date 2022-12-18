@@ -7,83 +7,81 @@ import {Layer} from "./Structs.sol";
 
 // Common
 
-error LengthMismatch();
+error LengthMismatch(); // ff633a38
 
-error NotContract(address target);
+error NotContract(address target); // b5cf5b8f
 
-error InvalidContract(address target);
+error InvalidContract(address target); // ec016484
 
-error FailedCall(address target, bytes data, bytes returndata);
+error FailedCall(address target, bytes data, bytes returndata); // 81a4deb2
 
-error Reentrancy();
+error Reentrancy(); // ab143c06
 
-error Unauthorized(address account);
-
-error InsufficientFee();
+error Unauthorized(address account); // 8e4a23d6
 
 // Token
 
-error AlreadyMinted(uint256 tokenId);
+error AlreadyMinted(uint256 tokenId); // a593dbf8
 
-error NotMinted(uint256 tokenId);
+error NotMinted(uint256 tokenId); // 9fe59932
 
-error NotOwner(uint256 tokenId, address account);
+error NotOwner(uint256 tokenId, address account); // b9c08761
 
-error InvalidOwner(address account);
+error InvalidOwner(address account); // b20f76e3
 
-error InvalidRecipient(address account);
+error InvalidRecipient(address account); // 17858bbe
 
-error UnsafeRecipient(address account);
+error UnsafeRecipient(address account); // 58c3bed4
 
-error InsufficientAllowance();
+error InsufficientAllowance(); // 13be252b
 
-error PermitDeadlineExpired();
+error PermitDeadlineExpired(); // 05787bdf
 
-error InvalidSigner(address account);
+error InvalidSigner(address account); // bf18af43
 
 // Copyright
 
-error InvalidCreator(address account);
+error InvalidCreator(address account); // fec99a9d
 
-error InvalidRule(IRuleset ruleset);
+error InvalidRule(IRuleset ruleset); // 4e9c97e4
 
-error InvalidMetadata(IMetadata metadata);
+error InvalidMetadata(IMetadata metadata); // dfc613a9
 
-error InvalidLayer(Layer layer);
+error InvalidLayer(Layer layer); // 1dac55a7
 
 // Artwork
 
-error Untransferable(uint256 tokenId);
+error Untransferable(uint256 tokenId); // 4dd940c2
 
-error Uncopiable(uint256 tokenId);
+error Uncopiable(uint256 tokenId); // c3780b51
 
-error Unburnable(uint256 tokenId);
+error Unburnable(uint256 tokenId); // 16ae3e98
 
-error Unusable(uint256 tokenId);
+error Unusable(uint256 tokenId); // 5e73191c
 
 // Metadata
 
-error AlreadyRegisteredMetadata(IMetadata metadata);
+error AlreadyRegisteredMetadata(IMetadata metadata); // 1f88e44e
 
-error NotRegisteredMetadata(IMetadata metadata);
+error NotRegisteredMetadata(IMetadata metadata); // 594ca23f
 
-error InexistenceMetadata(IMetadata metadata, uint256 metadataId);
+error InexistenceMetadata(IMetadata metadata, uint256 metadataId); // f8a7ace8
 
-error UnsupportedMetadata(IMetadata metadata);
+error UnsupportedMetadata(IMetadata metadata); // 1c041959
 
-error AlreadyCreated(uint256 metadataId);
+error AlreadyCreated(uint256 metadataId); // f2de5dcb
 
-error LayerNotExisted(Layer layer);
+error LayerNotExisted(Layer layer); // 2622b7b5
 
-error LayerOutOfBoundary(Layer layer);
+error LayerOutOfBoundary(Layer layer); // 10023977
 
-error InvalidDrawing(bytes drawing);
+error InvalidDrawing(bytes drawing); // f355dc56
 
 // Other
-error FrameSizeMistatch();
+error FrameSizeMistatch(); // 3725c9c6
 
-error FrameSizeOverflow();
+error FrameSizeOverflow(); // 4584161c
 
-error FrameOutOfBoundary();
+error FrameOutOfBoundary(); // 580f4093
 
-error ColorNotFound(bytes4 color);
+error ColorNotFound(bytes4 color); // 5597883e

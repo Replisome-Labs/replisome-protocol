@@ -63,8 +63,6 @@ contract CanvasTest is Test, ERC1155Receiver, ERC721Receiver {
 
         canvas.create(1, ruleset, metadata, data);
 
-        // emit log(artwork.uri(1));
-
         assertEq(copyright.balanceOf(address(this)), 1);
         assertEq(artwork.balanceOf(address(this), 1), 1);
     }

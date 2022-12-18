@@ -22,9 +22,6 @@ contract RasterMetadata is IMetadata, ERC165 {
     // mapping from metadataId to Meta
     mapping(uint256 => Meta) internal _metaOf;
 
-    // mapping from metadataId to content
-    mapping(uint256 => bytes) internal _contentOf;
-
     // mapping from metadataHash to metadataId
     mapping(bytes32 => uint256) internal _hashToId;
 
@@ -65,7 +62,7 @@ contract RasterMetadata is IMetadata, ERC165 {
             width: meta.width,
             height: meta.height,
             colors: meta.palette.getColors(),
-            data: _contentOf[metadataId]
+            data: meta.content
         });
         svg = RasterRenderer.generateSVG(params);
     }
@@ -75,7 +72,13 @@ contract RasterMetadata is IMetadata, ERC165 {
         view
         returns (bytes memory raw)
     {
-        raw = _contentOf[metadataId];
+        Meta storage meta = _metaOf[metadataId];
+        RasterEngine.Frame memory frame = RasterEngine.Frame({
+            width: meta.width,
+            height: meta.height,
+            data: meta.content
+        });
+        raw = frame.getRawData(meta.palette.getColors());
     }
 
     function exists(uint256 metadataId) public view returns (bool ok) {
@@ -107,9 +110,10 @@ contract RasterMetadata is IMetadata, ERC165 {
         mapping(uint256 => uint256) storage amountOf = _metaOf[metadataId]
             .ingredientAmountOf;
         amounts = new uint256[](tokenIds.length);
-        unchecked {
-            for (uint256 i = 0; i < tokenIds.length; i++) {
-                amounts[i] = amountOf[tokenIds[i]];
+        for (uint256 i = 0; i < tokenIds.length; ) {
+            amounts[i] = amountOf[tokenIds[i]];
+            unchecked {
+                ++i;
             }
         }
     }
@@ -129,16 +133,16 @@ contract RasterMetadata is IMetadata, ERC165 {
         Meta storage meta = _metaOf[0];
         meta.width = w;
         meta.height = h;
-        _processColors(meta, colors);
-        _processDrawing(meta, colors, drawing);
         _processLayers(meta, layers);
-
-        RasterEngine.Frame memory frame = _getFrame(meta);
-
-        _contentOf[metadataId] = frame.data;
-
-        bytes memory raw = _getRawData(metadataId);
-        bytes32 metadataHash = keccak256(raw);
+        _processColors(meta, colors);
+        bytes memory correctedDrawing = _processDrawing(meta, colors, drawing);
+        RasterEngine.Frame memory frame = _generateFrame(
+            meta,
+            layers,
+            correctedDrawing
+        );
+        bytes4[] memory savedColors = meta.palette.getColors();
+        bytes32 metadataHash = keccak256(frame.getRawData(savedColors));
         metadataId = _hashToId[metadataHash];
 
         delete _metaOf[0];
@@ -161,16 +165,19 @@ contract RasterMetadata is IMetadata, ERC165 {
         Meta storage meta = _metaOf[metadataId];
         meta.width = w;
         meta.height = h;
-        _processColors(meta, colors);
-        _processDrawing(meta, colors, drawing);
         _processLayers(meta, layers);
+        _processColors(meta, colors);
+        bytes memory correctedDrawing = _processDrawing(meta, colors, drawing);
 
-        RasterEngine.Frame memory frame = _getFrame(meta);
-        _contentOf[metadataId] = frame.data;
+        RasterEngine.Frame memory frame = _generateFrame(
+            meta,
+            layers,
+            correctedDrawing
+        );
+        meta.content = frame.data;
 
-        bytes memory raw = _getRawData(metadataId);
+        bytes memory raw = frame.getRawData(meta.palette.getColors());
         bytes32 metadataHash = keccak256(raw);
-
         if (_hashToId[metadataHash] != uint256(0)) {
             revert AlreadyCreated(_hashToId[metadataHash]);
         }
@@ -198,32 +205,34 @@ contract RasterMetadata is IMetadata, ERC165 {
     }
 
     function _processLayers(Meta storage meta, Layer[] memory layers) internal {
-        unchecked {
-            for (uint256 i = 0; i < layers.length; i++) {
-                Layer memory layer = layers[i];
+        uint256 metadataId;
+        bytes4[] memory colors;
+        uint256 tokenId;
+        for (uint256 i = 0; i < layers.length; ) {
+            Layer memory layer = layers[i];
 
-                // validate layer metadata
-                (, uint256 metadataId) = _validateLayer(
-                    layer,
-                    meta.width,
-                    meta.height
-                );
+            // validate layer metadata
+            (, metadataId) = _validateLayer(layer, meta.width, meta.height);
 
-                // save palette
-                bytes4[] memory colors = getColors(metadataId);
-                for (uint256 j = 0; j < colors.length; j++) {
-                    meta.palette.addColor(colors[j]);
+            // save palette
+            colors = getColors(metadataId);
+            for (uint256 j = 0; j < colors.length; ) {
+                meta.palette.addColor(colors[j]);
+
+                unchecked {
+                    ++j;
                 }
+            }
 
-                // save ingredients
-                uint256 tokenId = layer.tokenId;
-                if (meta.ingredientAmountOf[tokenId] == uint256(0)) {
-                    meta.ingredients.push(tokenId);
-                }
-                meta.ingredientAmountOf[tokenId]++;
+            // save ingredients
+            tokenId = layer.tokenId;
+            if (meta.ingredientAmountOf[tokenId] == uint256(0)) {
+                meta.ingredients.push(tokenId);
+            }
+            meta.ingredientAmountOf[tokenId]++;
 
-                // save layer
-                meta.layers.push(layer);
+            unchecked {
+                ++i;
             }
         }
     }
@@ -231,9 +240,10 @@ contract RasterMetadata is IMetadata, ERC165 {
     function _processColors(Meta storage meta, bytes4[] memory colors)
         internal
     {
-        unchecked {
-            for (uint8 i = 0; i < colors.length; i++) {
-                meta.palette.addColor(colors[i]);
+        for (uint8 i = 0; i < colors.length; ) {
+            meta.palette.addColor(colors[i]);
+            unchecked {
+                ++i;
             }
         }
     }
@@ -242,25 +252,33 @@ contract RasterMetadata is IMetadata, ERC165 {
         Meta storage meta,
         bytes4[] memory colors,
         bytes memory drawing
-    ) internal {
-        if (drawing.length != meta.width * meta.height) {
+    ) internal view returns (bytes memory correctedDrawing) {
+        uint256 w = meta.width;
+        uint256 h = meta.height;
+        if (
+            w < 1 ||
+            w > type(uint64).max ||
+            h < 1 ||
+            h > type(uint64).max ||
+            drawing.length != w * h
+        ) {
             revert InvalidDrawing(drawing);
         }
-        bytes memory corrected = new bytes(drawing.length);
-        unchecked {
-            for (uint256 i = 0; i < drawing.length; i++) {
-                uint8 colorIndex = uint8(drawing[i]);
 
-                if (colorIndex > uint8(0)) {
-                    colorIndex = meta.palette.getColorIndex(
-                        colors[colorIndex - 1]
-                    );
-                }
+        correctedDrawing = new bytes(drawing.length);
+        uint8 colorIndex;
+        for (uint256 i = 0; i < drawing.length; ) {
+            colorIndex = uint8(drawing[i]);
 
-                corrected[i] = bytes1(colorIndex);
+            if (colorIndex > uint8(0)) {
+                colorIndex = meta.palette.getColorIndex(colors[colorIndex - 1]);
+            }
+
+            correctedDrawing[i] = bytes1(colorIndex);
+            unchecked {
+                ++i;
             }
         }
-        meta.drawingLayer = corrected;
     }
 
     function _validateLayer(
@@ -296,26 +314,27 @@ contract RasterMetadata is IMetadata, ERC165 {
         }
     }
 
-    function _getRawData(uint256 metadataId)
-        internal
-        view
-        returns (bytes memory raw)
-    {
-        Meta storage meta = _metaOf[metadataId];
-        bytes4[] memory colors = meta.palette.getColors();
-        raw = abi.encode(
-            meta.width,
-            meta.height,
-            colors,
-            _contentOf[metadataId]
-        );
+    function _validateDrawing(
+        uint256 w,
+        uint256 h,
+        bytes memory drawing
+    ) internal pure {
+        if (
+            w < 1 ||
+            w > type(uint64).max ||
+            h < 1 ||
+            h > type(uint64).max ||
+            drawing.length != w * h
+        ) {
+            revert InvalidDrawing(drawing);
+        }
     }
 
-    function _getFrame(Meta storage meta)
-        internal
-        view
-        returns (RasterEngine.Frame memory frame)
-    {
+    function _generateFrame(
+        Meta storage meta,
+        Layer[] memory layers,
+        bytes memory drawing
+    ) internal view returns (RasterEngine.Frame memory frame) {
         uint256 baseWidth = meta.width;
         uint256 baseHeight = meta.height;
         frame = RasterEngine.Frame({
@@ -323,32 +342,31 @@ contract RasterMetadata is IMetadata, ERC165 {
             height: baseHeight,
             data: new bytes(baseWidth * baseHeight)
         });
-
-        Layer[] memory layers = meta.layers;
-        unchecked {
-            for (uint256 i = 0; i < layers.length; i++) {
-                Layer memory layer = layers[i];
-                (
-                    Meta storage layerMeta,
-                    RasterEngine.Frame memory layerFrame
-                ) = _getLayerMeta(layer.tokenId);
-                layerFrame.normalizeColors(layerMeta.palette, meta.palette);
-                layerFrame.transformFrame(
-                    layer.rotate,
-                    layer.flip,
-                    layer.translateX,
-                    layer.translateY,
-                    baseWidth,
-                    baseHeight
-                );
-                frame.addFrame(layerFrame);
+        for (uint256 i = 0; i < layers.length; ) {
+            Layer memory layer = layers[i];
+            (
+                Meta storage layerMeta,
+                RasterEngine.Frame memory layerFrame
+            ) = _getLayerMeta(layer.tokenId);
+            layerFrame.normalizeColors(layerMeta.palette, meta.palette);
+            layerFrame.transformFrame(
+                layer.rotate,
+                layer.flip,
+                layer.translateX,
+                layer.translateY,
+                baseWidth,
+                baseHeight
+            );
+            frame.addFrame(layerFrame);
+            unchecked {
+                ++i;
             }
         }
 
         RasterEngine.Frame memory drawingFrame = RasterEngine.Frame({
             width: baseWidth,
             height: baseHeight,
-            data: meta.drawingLayer
+            data: drawing
         });
         frame.addFrame(drawingFrame);
     }
@@ -363,7 +381,7 @@ contract RasterMetadata is IMetadata, ERC165 {
         frame = RasterEngine.Frame({
             width: meta.width,
             height: meta.height,
-            data: _contentOf[metadataId]
+            data: meta.content
         });
     }
 }

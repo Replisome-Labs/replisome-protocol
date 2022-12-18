@@ -43,25 +43,21 @@ library RasterEngine {
     function addColor(Palette storage palette, bytes4 color) public {
         if (palette.colorIndexOf[color] == uint8(0)) {
             uint8 colorCount = palette.colorCount;
-            if (colorCount == uint8(0)) {
-                palette.colorOf[1] = color;
-                palette.colorIndexOf[color] = 1;
-            } else {
+            uint8 nextColorIndex;
+            bytes4 currentColor;
+            for (uint8 i = colorCount; i >= 0; ) {
+                nextColorIndex = i + 1;
+                currentColor = palette.colorOf[i];
+                if (uint32(currentColor) < uint32(color)) {
+                    palette.colorOf[nextColorIndex] = color;
+                    palette.colorIndexOf[color] = nextColorIndex;
+                    break;
+                } else {
+                    palette.colorOf[nextColorIndex] = currentColor;
+                    palette.colorIndexOf[currentColor] = nextColorIndex;
+                }
                 unchecked {
-                    uint8 nextColorIndex;
-                    bytes4 currentColor;
-                    for (uint8 i = colorCount; i > 0; i--) {
-                        nextColorIndex = i + 1;
-                        currentColor = palette.colorOf[i];
-                        if (uint32(currentColor) < uint32(color)) {
-                            palette.colorOf[nextColorIndex] = color;
-                            palette.colorIndexOf[color] = nextColorIndex;
-                            break;
-                        } else {
-                            palette.colorOf[nextColorIndex] = currentColor;
-                            palette.colorIndexOf[currentColor] = nextColorIndex;
-                        }
-                    }
+                    --i;
                 }
             }
 
@@ -70,11 +66,13 @@ library RasterEngine {
     }
 
     function clearColors(Palette storage palette) public {
-        unchecked {
-            for (uint8 i = 1; i <= palette.colorCount; i++) {
-                bytes4 c = palette.colorOf[i];
-                delete palette.colorIndexOf[c];
-                delete palette.colorOf[i];
+        bytes4 color;
+        for (uint8 i = 1; i <= palette.colorCount; ) {
+            color = palette.colorOf[i];
+            delete palette.colorIndexOf[color];
+            delete palette.colorOf[i];
+            unchecked {
+                ++i;
             }
         }
         delete palette.colorCount;
@@ -96,9 +94,10 @@ library RasterEngine {
         ) {
             revert FrameSizeMistatch();
         }
+        bytes1 pixel;
         unchecked {
             for (uint256 i = 0; i < layerFrame.data.length; i++) {
-                bytes1 pixel = layerFrame.data[i];
+                pixel = layerFrame.data[i];
                 if (pixel == bytes1(0)) continue;
                 baseFrame.data[i] = pixel;
             }
@@ -110,18 +109,31 @@ library RasterEngine {
         Palette storage fromPalette,
         Palette storage toPalette
     ) internal view {
+        bytes1 pixel;
+        bytes4 color;
+        uint8 colorIndex;
         unchecked {
             for (uint256 i = 0; i < frame.data.length; i++) {
-                bytes1 pixel = frame.data[i];
+                pixel = frame.data[i];
                 if (pixel == bytes1(0)) continue;
-                bytes4 color = getColor(fromPalette, uint8(pixel));
-                uint8 colorIndex = getColorIndex(toPalette, color);
+
+                color = getColor(fromPalette, uint8(pixel));
+                colorIndex = getColorIndex(toPalette, color);
                 if (colorIndex == uint8(0)) {
                     revert ColorNotFound(color);
                 }
+
                 frame.data[i] = bytes1(colorIndex);
             }
         }
+    }
+
+    function getRawData(Frame memory frame, bytes4[] memory colors)
+        internal
+        pure
+        returns (bytes memory raw)
+    {
+        raw = abi.encodePacked(frame.width, frame.height, colors, frame.data);
     }
 
     function transformFrame(
@@ -133,56 +145,81 @@ library RasterEngine {
         uint256 baseWidth,
         uint256 baseHeight
     ) internal pure {
-        rotateFrame(frame, rotate);
-        flipFrame(frame, flip);
-        translateFrame(frame, translateX, translateY, baseWidth, baseHeight);
+        if (rotate != Rotate.D0) {
+            rotateFrame(frame, rotate);
+        }
+        if (flip != Flip.None) {
+            flipFrame(frame, flip);
+        }
+        if (translateX != uint256(0) || translateY != uint256(0)) {
+            translateFrame(
+                frame,
+                translateX,
+                translateY,
+                baseWidth,
+                baseHeight
+            );
+        }
     }
 
     function rotateFrame(Frame memory frame, Rotate rotate) internal pure {
         bytes memory newData = new bytes(frame.data.length);
-        for (uint256 i = 0; i < frame.data.length; i++) {
-            bytes1 pixel = frame.data[i];
-            if (pixel == bytes1(0)) continue;
+        bytes1 pixel;
+        uint256 x;
+        uint256 y;
+        uint256 pos;
+        uint256 temp;
+        unchecked {
+            for (uint256 i = 0; i < frame.data.length; i++) {
+                pixel = frame.data[i];
+                if (pixel == bytes1(0)) continue;
 
-            uint256 x = i % frame.width;
-            uint256 y = i / frame.height;
+                x = i % frame.width;
+                y = i / frame.height;
 
-            if (rotate == Rotate.D90) {
-                uint256 oldX = x;
-                x = frame.height - y - 1;
-                y = oldX;
-            } else if (rotate == Rotate.D180) {
-                x = frame.width - x - 1;
-                y = frame.height - y - 1;
-            } else if (rotate == Rotate.D270) {
-                uint256 oldX = x;
-                x = y;
-                y = frame.width - oldX - 1;
+                if (rotate == Rotate.D90) {
+                    temp = x;
+                    x = frame.height - y - 1;
+                    y = temp;
+                } else if (rotate == Rotate.D180) {
+                    x = frame.width - x - 1;
+                    y = frame.height - y - 1;
+                } else if (rotate == Rotate.D270) {
+                    temp = x;
+                    x = y;
+                    y = frame.width - temp - 1;
+                }
+
+                pos = y * frame.width + x;
+                newData[pos] = pixel;
             }
-
-            uint256 pos = y * frame.width + x;
-            newData[pos] = pixel;
         }
         frame.data = newData;
     }
 
     function flipFrame(Frame memory frame, Flip flip) internal pure {
         bytes memory newData = new bytes(frame.data.length);
-        for (uint256 i = 0; i < frame.data.length; i++) {
-            bytes1 pixel = frame.data[i];
-            if (pixel == bytes1(0)) continue;
+        bytes1 pixel;
+        uint256 x;
+        uint256 y;
+        uint256 pos;
+        unchecked {
+            for (uint256 i = 0; i < frame.data.length; i++) {
+                pixel = frame.data[i];
+                if (pixel == bytes1(0)) continue;
 
-            uint256 x = i % frame.width;
-            uint256 y = i / frame.height;
+                x = i % frame.width;
+                y = i / frame.height;
 
-            if (flip == Flip.Horizontal) {
-                x = frame.width - x - 1;
-            } else if (flip == Flip.Vertical) {
-                y = frame.height - y - 1;
+                if (flip == Flip.Horizontal) {
+                    x = frame.width - x - 1;
+                } else if (flip == Flip.Vertical) {
+                    y = frame.height - y - 1;
+                }
+
+                pos = y * frame.width + x;
+                newData[pos] = pixel;
             }
-
-            uint256 pos = y * frame.width + x;
-            newData[pos] = pixel;
         }
         frame.data = newData;
     }
@@ -201,29 +238,36 @@ library RasterEngine {
             revert FrameOutOfBoundary();
         }
 
-        scaleFrame(frame, baseWidth, baseHeight);
+        bytes memory newData = new bytes(baseWidth * baseHeight);
+        bytes1 pixel;
+        uint256 x;
+        uint256 y;
+        uint256 pos;
+        unchecked {
+            for (uint256 i = 0; i < frame.data.length; i++) {
+                pixel = frame.data[i];
+                if (pixel == bytes1(0)) continue;
 
-        bytes memory newData = new bytes(frame.data.length);
-        for (uint256 i = 0; i < frame.data.length; i++) {
-            bytes1 pixel = frame.data[i];
-            if (pixel == bytes1(0)) continue;
-            uint256 x = (i % frame.width) + translateX;
-            uint256 y = i / frame.height + translateY;
-            uint256 pos = y * frame.width + x;
-            newData[pos] = pixel;
+                x = (i % frame.width) + translateX;
+                y = i / frame.height + translateY;
+                pos = y * baseWidth + x;
+                newData[pos] = pixel;
+            }
         }
         frame.data = newData;
+
+        scaleFrame(frame, baseWidth, baseHeight);
     }
 
     function scaleFrame(
         Frame memory frame,
-        uint256 toWidth,
-        uint256 toHeight
+        uint256 width,
+        uint256 height
     ) internal pure {
-        if (frame.width > toWidth || frame.height > toHeight) {
+        if (frame.width > width || frame.height > height) {
             revert FrameSizeOverflow();
         }
-        frame.width = toWidth;
-        frame.height = toHeight;
+        frame.width = width;
+        frame.height = height;
     }
 }
