@@ -133,7 +133,7 @@ library RasterEngine {
         pure
         returns (bytes memory raw)
     {
-        raw = abi.encodePacked(frame.width, frame.height, colors, frame.data);
+        raw = abi.encode(frame.width, frame.height, colors, frame.data);
     }
 
     function transformFrame(
