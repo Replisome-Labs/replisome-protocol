@@ -1,1 +1,1 @@
-- [] check all rulesets from ancestor
+# HiggsPixel contract
