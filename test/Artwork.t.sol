@@ -5,7 +5,7 @@ import "forge-std/Test.sol";
 import {Artwork} from "../src/Artwork.sol";
 import {Configurator} from "../src/Configurator.sol";
 import {ConstantFeeFormula} from "../src/fees/ConstantFeeFormula.sol";
-import {Uncopiable, Unburnable} from "../src/interfaces/Errors.sol";
+import {ForbiddenToCopy, ForbiddenToBurn} from "../src/interfaces/Errors.sol";
 import {Action} from "../src/interfaces/Structs.sol";
 import {IERC20} from "../src/interfaces/IERC20.sol";
 import {IFeeFormula} from "../src/interfaces/IFeeFormula.sol";
@@ -120,7 +120,7 @@ contract ArtworkTest is Test, ERC1155Receiver {
         feeToken.approve(address(artwork), type(uint256).max);
 
         vm.expectRevert(
-            abi.encodeWithSelector(Uncopiable.selector, uint256(1))
+            abi.encodeWithSelector(ForbiddenToCopy.selector, uint256(1))
         );
 
         artwork.copy(address(this), 1, 1);
@@ -191,7 +191,7 @@ contract ArtworkTest is Test, ERC1155Receiver {
         feeToken.approve(address(artwork), type(uint256).max);
 
         vm.expectRevert(
-            abi.encodeWithSelector(Unburnable.selector, uint256(1))
+            abi.encodeWithSelector(ForbiddenToBurn.selector, uint256(1))
         );
 
         artwork.burn(address(this), 1, 1);

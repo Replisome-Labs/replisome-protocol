@@ -2,7 +2,7 @@
 pragma solidity ^0.8.13;
 
 import {Action} from "./interfaces/Structs.sol";
-import {Unauthorized, Untransferable, Uncopiable, Unburnable, LengthMismatch, UnsafeRecipient} from "./interfaces/Errors.sol";
+import {Unauthorized, ForbiddenToTransfer, ForbiddenToCopy, ForbiddenToBurn, LengthMismatch, UnsafeRecipient} from "./interfaces/Errors.sol";
 import {IArtwork} from "./interfaces/IArtwork.sol";
 import {IConfigurator} from "./interfaces/IConfigurator.sol";
 import {ICopyright} from "./interfaces/ICopyright.sol";
@@ -64,12 +64,8 @@ contract Artwork is IArtwork, ERC1155 {
         view
         returns (address receiver, uint256 royaltyAmount)
     {
-        receiver = copyright.getRoyaltyReceiver(Action.ArtworkSale, tokenId);
-        royaltyAmount = copyright.getRoyaltyAmount(
-            Action.ArtworkSale,
-            tokenId,
-            salePrice
-        );
+        IRuleset ruleset = copyright.rulesetOf(tokenId);
+        (receiver, royaltyAmount) = ruleset.getSaleRoyalty(salePrice);
     }
 
     function uri(uint256 tokenId)
@@ -114,7 +110,7 @@ contract Artwork is IArtwork, ERC1155 {
             allowed = resetTransferAllowance(from, tokenId);
         }
         if (allowed < amount) {
-            revert Untransferable(tokenId);
+            revert ForbiddenToTransfer(tokenId);
         }
         if (allowed != type(uint256).max) {
             canTransfer[from][tokenId] = allowed - amount;
@@ -152,7 +148,7 @@ contract Artwork is IArtwork, ERC1155 {
                 allowed = resetTransferAllowance(from, id);
             }
             if (allowed < amount) {
-                revert Untransferable(id);
+                revert ForbiddenToTransfer(id);
             }
             if (allowed != type(uint256).max) {
                 canTransfer[from][id] = allowed - amount;
@@ -279,40 +275,18 @@ contract Artwork is IArtwork, ERC1155 {
             allowed = resetCopyAllowance(account, tokenId);
         }
         if (allowed < amount) {
-            revert Uncopiable(tokenId);
+            revert ForbiddenToCopy(tokenId);
         }
         if (allowed != type(uint256).max) {
             canCopy[account][tokenId] = allowed - amount;
         }
 
-        (IMetadata metadata, uint256 metadataId) = copyright.metadataOf(
-            tokenId
-        );
-
-        // pay protocol fee
-        _payFee(
-            configurator.feeToken(),
-            msg.sender,
-            configurator.treatury(),
-            configurator.getFeeAmount(
-                Action.ArtworkCopy,
-                metadata,
-                metadataId,
-                amount
-            )
-        );
-
-        // pay royalty fee
-        _payFee(
-            copyright.getRoyaltyToken(Action.ArtworkCopy, tokenId),
-            msg.sender,
-            copyright.getRoyaltyReceiver(Action.ArtworkCopy, tokenId),
-            copyright.getRoyaltyAmount(Action.ArtworkCopy, tokenId, amount)
-        );
-
+        ownedBalanceOf[account][tokenId] += amount;
         _consume(account, tokenId, amount);
         _mint(account, tokenId, amount, "");
-        ownedBalanceOf[account][tokenId] += amount;
+
+        _payProtocolFee(tokenId, amount, Action.ArtworkCopy);
+        _payCopyRoyalty(tokenId, amount);
     }
 
     function burn(
@@ -329,40 +303,18 @@ contract Artwork is IArtwork, ERC1155 {
             allowed = resetBurnAllowance(account, tokenId);
         }
         if (allowed < amount) {
-            revert Unburnable(tokenId);
+            revert ForbiddenToBurn(tokenId);
         }
         if (allowed != type(uint256).max) {
             canBurn[account][tokenId] = allowed - amount;
         }
 
-        (IMetadata metadata, uint256 metadataId) = copyright.metadataOf(
-            tokenId
-        );
-
-        // pay protocol fee
-        _payFee(
-            configurator.feeToken(),
-            msg.sender,
-            configurator.treatury(),
-            configurator.getFeeAmount(
-                Action.ArtworkBurn,
-                metadata,
-                metadataId,
-                amount
-            )
-        );
-
-        // pay royalty fee
-        _payFee(
-            copyright.getRoyaltyToken(Action.ArtworkBurn, tokenId),
-            msg.sender,
-            copyright.getRoyaltyReceiver(Action.ArtworkBurn, tokenId),
-            copyright.getRoyaltyAmount(Action.ArtworkBurn, tokenId, amount)
-        );
-
-        _burn(account, tokenId, amount);
-        _recycle(account, tokenId, amount);
         ownedBalanceOf[account][tokenId] -= amount;
+        _recycle(account, tokenId, amount);
+        _burn(account, tokenId, amount);
+
+        _payProtocolFee(tokenId, amount, Action.ArtworkBurn);
+        _payBurnRoyalty(tokenId, amount);
     }
 
     function _consume(
@@ -378,10 +330,15 @@ contract Artwork is IArtwork, ERC1155 {
         uint256 idsLength = ingredientIds.length;
         if (idsLength > 0) {
             uint256[] memory usedAmounts = new uint256[](idsLength);
+            uint256 ingredientId;
 
             for (uint256 i = 0; i < idsLength; ) {
+                ingredientId = ingredientIds[i];
                 usedAmounts[i] = ingredientAmounts[i] * amount;
-                balanceOf[account][ingredientIds[i]] -= usedAmounts[i];
+                balanceOf[account][ingredientId] -= usedAmounts[i];
+
+                _payUtilizeRoyalty(ingredientId, usedAmounts[i]);
+
                 unchecked {
                     ++i;
                 }
@@ -408,6 +365,7 @@ contract Artwork is IArtwork, ERC1155 {
             for (uint256 i = 0; i < idsLength; ) {
                 usedAmounts[i] = ingredientAmounts[i] * amount;
                 balanceOf[account][ingredientIds[i]] += usedAmounts[i];
+
                 unchecked {
                     ++i;
                 }
@@ -417,19 +375,74 @@ contract Artwork is IArtwork, ERC1155 {
         }
     }
 
-    function _payFee(
-        IERC20 token,
-        address from,
-        address to,
-        uint256 amount
+    function _payCopyRoyalty(uint256 tokenId, uint256 amount) internal {
+        IRuleset ruleset = copyright.rulesetOf(tokenId);
+        (address receiver, IERC20 token, uint256 royaltyAmount) = ruleset
+            .getCopyRoyalty(amount);
+        if (address(token) != address(0) && receiver != address(0)) {
+            token.safeTransferFrom(msg.sender, receiver, royaltyAmount);
+            emit RoyaltyTransfer(
+                msg.sender,
+                receiver,
+                token,
+                royaltyAmount,
+                Action.ArtworkCopy
+            );
+        }
+    }
+
+    function _payBurnRoyalty(uint256 tokenId, uint256 amount) internal {
+        IRuleset ruleset = copyright.rulesetOf(tokenId);
+        (address receiver, IERC20 token, uint256 royaltyAmount) = ruleset
+            .getBurnRoyalty(amount);
+
+        if (address(token) != address(0) && receiver != address(0)) {
+            token.safeTransferFrom(msg.sender, receiver, royaltyAmount);
+            emit RoyaltyTransfer(
+                msg.sender,
+                receiver,
+                token,
+                royaltyAmount,
+                Action.ArtworkBurn
+            );
+        }
+    }
+
+    function _payUtilizeRoyalty(uint256 tokenId, uint256 amount) internal {
+        IRuleset ruleset = copyright.rulesetOf(tokenId);
+        (address receiver, IERC20 token, uint256 royaltyAmount) = ruleset
+            .getUtilizeRoyalty(amount);
+
+        if (address(token) != address(0) && receiver != address(0)) {
+            token.safeTransferFrom(msg.sender, receiver, royaltyAmount);
+            emit RoyaltyTransfer(
+                msg.sender,
+                receiver,
+                token,
+                royaltyAmount,
+                Action.ArtworkUtilize
+            );
+        }
+    }
+
+    function _payProtocolFee(
+        uint256 tokenId,
+        uint256 amount,
+        Action action
     ) internal {
-        if (
-            address(token) != address(0) &&
-            from != address(0) &&
-            to != address(0) &&
-            amount != uint256(0)
-        ) {
-            token.safeTransferFrom(from, to, amount);
+        IERC20 token = configurator.feeToken();
+        address treasury = configurator.treatury();
+        if (address(token) != address(0) && treasury != address(0)) {
+            (IMetadata metadata, uint256 metadataId) = copyright.metadataOf(
+                tokenId
+            );
+            uint256 fee = configurator.getFeeAmount(
+                action,
+                metadata,
+                metadataId,
+                amount
+            );
+            token.safeTransferFrom(msg.sender, treasury, fee);
         }
     }
 }

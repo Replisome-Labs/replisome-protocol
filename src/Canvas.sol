@@ -50,42 +50,15 @@ contract Canvas is ICanvas, ERC165, ERC721Receiver, ERC1155Receiver {
         IMetadata metadata,
         bytes calldata data
     ) external returns (uint256 tokenId) {
-        (uint256 metadataId, , ) = createAndAppraise(amount, metadata, data);
+        uint256 metadataId = metadata.create(data);
 
-        _payFeeTo(
-            configurator.feeToken(),
-            msg.sender,
-            address(copyright),
-            configurator.getFeeAmount(
-                Action.CopyrightClaim,
-                metadata,
-                metadataId,
-                1
-            )
-        );
+        _payCopyrightFee(metadata, metadataId, Action.CopyrightClaim);
 
         copyright.claim(msg.sender, ruleset, metadata, metadataId);
         tokenId = copyright.search(metadata, metadataId);
 
         if (amount > 0) {
-            _payFeeTo(
-                configurator.feeToken(),
-                msg.sender,
-                address(artwork),
-                configurator.getFeeAmount(
-                    Action.ArtworkCopy,
-                    metadata,
-                    metadataId,
-                    amount
-                )
-            );
-
-            _payFeeTo(
-                copyright.getRoyaltyToken(Action.ArtworkCopy, tokenId),
-                msg.sender,
-                address(artwork),
-                copyright.getRoyaltyAmount(Action.ArtworkCopy, tokenId, amount)
-            );
+            _payArtworkFee(tokenId, amount, Action.ArtworkCopy);
 
             artwork.copy(msg.sender, tokenId, amount);
         }
@@ -96,45 +69,14 @@ contract Canvas is ICanvas, ERC165, ERC721Receiver, ERC1155Receiver {
             tokenId
         );
 
-        _payFeeTo(
-            configurator.feeToken(),
-            msg.sender,
-            address(copyright),
-            configurator.getFeeAmount(
-                Action.CopyrightWaive,
-                metadata,
-                metadataId,
-                1
-            )
-        );
+        _payCopyrightFee(metadata, metadataId, Action.CopyrightWaive);
 
         copyright.waive(tokenId);
     }
 
     function copy(uint256 tokenId, uint256 amount) external {
         if (amount > 0) {
-            (IMetadata metadata, uint256 metadataId) = copyright.metadataOf(
-                tokenId
-            );
-
-            _payFeeTo(
-                configurator.feeToken(),
-                msg.sender,
-                address(artwork),
-                configurator.getFeeAmount(
-                    Action.ArtworkCopy,
-                    metadata,
-                    metadataId,
-                    amount
-                )
-            );
-
-            _payFeeTo(
-                copyright.getRoyaltyToken(Action.ArtworkCopy, tokenId),
-                msg.sender,
-                address(artwork),
-                copyright.getRoyaltyAmount(Action.ArtworkCopy, tokenId, amount)
-            );
+            _payArtworkFee(tokenId, amount, Action.ArtworkCopy);
 
             artwork.copy(msg.sender, tokenId, amount);
         }
@@ -142,34 +84,14 @@ contract Canvas is ICanvas, ERC165, ERC721Receiver, ERC1155Receiver {
 
     function burn(uint256 tokenId, uint256 amount) external {
         if (amount > 0) {
-            (IMetadata metadata, uint256 metadataId) = copyright.metadataOf(
-                tokenId
-            );
-
-            _payFeeTo(
-                configurator.feeToken(),
-                msg.sender,
-                address(artwork),
-                configurator.getFeeAmount(
-                    Action.ArtworkBurn,
-                    metadata,
-                    metadataId,
-                    amount
-                )
-            );
-
-            _payFeeTo(
-                copyright.getRoyaltyToken(Action.ArtworkBurn, tokenId),
-                msg.sender,
-                address(artwork),
-                copyright.getRoyaltyAmount(Action.ArtworkBurn, tokenId, amount)
-            );
+            _payArtworkFee(tokenId, amount, Action.ArtworkBurn);
 
             artwork.burn(msg.sender, tokenId, amount);
         }
     }
 
-    function createAndAppraise(
+    // this function should only dry run
+    function appraise(
         uint256 amount,
         IMetadata metadata,
         bytes calldata data
@@ -194,6 +116,63 @@ contract Canvas is ICanvas, ERC165, ERC721Receiver, ERC1155Receiver {
             metadataId,
             amount
         );
+    }
+
+    function _payCopyrightFee(
+        IMetadata metadata,
+        uint256 metadataId,
+        Action action
+    ) internal {
+        IERC20 token = configurator.feeToken();
+        if (address(token) != address(0)) {
+            uint256 fee = configurator.getFeeAmount(
+                action,
+                metadata,
+                metadataId,
+                1
+            );
+            token.safeTransferFrom(msg.sender, address(this), fee);
+            token.safeIncreaseAllowance(address(copyright), fee);
+        }
+    }
+
+    function _payArtworkFee(
+        uint256 tokenId,
+        uint256 amount,
+        Action action
+    ) internal {
+        IRuleset ruleset = copyright.rulesetOf(tokenId);
+        (IMetadata metadata, uint256 metadataId) = copyright.metadataOf(
+            tokenId
+        );
+
+        IERC20 feeToken = configurator.feeToken();
+        uint256 protocolFee = configurator.getFeeAmount(
+            action,
+            metadata,
+            metadataId,
+            amount
+        );
+        if (address(feeToken) != address(0)) {
+            feeToken.safeTransferFrom(msg.sender, address(this), protocolFee);
+            feeToken.safeIncreaseAllowance(address(artwork), protocolFee);
+        }
+
+        IERC20 royaltyToken;
+        uint256 royaltyAmount;
+        if (action == Action.ArtworkCopy) {
+            (, royaltyToken, royaltyAmount) = ruleset.getCopyRoyalty(amount);
+        } else if (action == Action.ArtworkBurn) {
+            (, royaltyToken, royaltyAmount) = ruleset.getBurnRoyalty(amount);
+        }
+        if (address(royaltyToken) != address(0)) {
+            royaltyToken.safeTransferFrom(
+                msg.sender,
+                address(this),
+                royaltyAmount
+            );
+            royaltyToken.safeIncreaseAllowance(address(artwork), royaltyAmount);
+        }
     }
 
     function _payFeeTo(

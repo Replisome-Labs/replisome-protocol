@@ -6,8 +6,18 @@ import {ICopyright} from "./ICopyright.sol";
 import {IERC1155} from "./IERC1155.sol";
 import {IERC1155MetadataURI} from "./IERC1155MetadataURI.sol";
 import {IERC2981} from "./IERC2981.sol";
+import {IERC20} from "./IERC20.sol";
+import {Action} from "./Structs.sol";
 
 interface IArtwork is IERC1155, IERC1155MetadataURI, IERC2981 {
+    event RoyaltyTransfer(
+        address indexed from,
+        address indexed to,
+        IERC20 token,
+        uint256 value,
+        Action indexed action
+    );
+
     event Utilized(address indexed account, uint256[] ids, uint256[] values);
 
     event Unutilized(address indexed account, uint256[] ids, uint256[] values);

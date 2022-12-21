@@ -6,14 +6,12 @@ import {IMetadata} from "./IMetadata.sol";
 import {RasterEngine} from "../utils/RasterEngine.sol";
 
 enum Action {
-    ArtworkTransfer,
-    ArtworkCopy,
-    ArtworkBurn,
-    ArtworkSale,
-    CopyrightTransfer,
     CopyrightClaim,
     CopyrightWaive,
-    CopyrightSale
+    CopyrightSale,
+    ArtworkCopy,
+    ArtworkBurn,
+    ArtworkUtilize
 }
 
 enum Rotate {

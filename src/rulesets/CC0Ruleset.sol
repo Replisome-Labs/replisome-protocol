@@ -36,7 +36,7 @@ contract CC0Ruleset is IRuleset, ERC165 {
         allowance = type(uint256).max;
     }
 
-    function canUse(address, IRuleset)
+    function canApply(address, IRuleset)
         external
         pure
         returns (uint256 allowance)
@@ -44,23 +44,54 @@ contract CC0Ruleset is IRuleset, ERC165 {
         allowance = type(uint256).max;
     }
 
-    function getRoyaltyReceiver(Action)
+    function getSaleRoyalty(uint256)
         external
         pure
-        returns (address receiver)
+        returns (address receiver, uint256 royaltyAmount)
     {
         receiver = address(0);
+        royaltyAmount = uint256(0);
     }
 
-    function getRoyaltyToken(Action) external pure returns (IERC20 token) {
-        token = IERC20(address(0));
-    }
-
-    function getRoyaltyAmount(Action, uint256)
+    function getCopyRoyalty(uint256)
         external
         pure
-        returns (uint256 amount)
+        returns (
+            address receiver,
+            IERC20 token,
+            uint256 royaltyAmount
+        )
     {
-        amount = uint256(0);
+        receiver = address(0);
+        token = IERC20(address(0));
+        royaltyAmount = uint256(0);
+    }
+
+    function getBurnRoyalty(uint256)
+        external
+        pure
+        returns (
+            address receiver,
+            IERC20 token,
+            uint256 royaltyAmount
+        )
+    {
+        receiver = address(0);
+        token = IERC20(address(0));
+        royaltyAmount = uint256(0);
+    }
+
+    function getUtilizeRoyalty(uint256)
+        external
+        pure
+        returns (
+            address receiver,
+            IERC20 token,
+            uint256 royaltyAmount
+        )
+    {
+        receiver = address(0);
+        token = IERC20(address(0));
+        royaltyAmount = uint256(0);
     }
 }

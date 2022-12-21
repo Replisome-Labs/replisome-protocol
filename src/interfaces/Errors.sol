@@ -43,21 +43,23 @@ error InvalidSigner(address account); // bf18af43
 
 error InvalidCreator(address account); // fec99a9d
 
-error InvalidRule(IRuleset ruleset); // 4e9c97e4
-
 error InvalidMetadata(IMetadata metadata); // dfc613a9
 
 error InvalidLayer(Layer layer); // 1dac55a7
 
+error InvalidRuleset(IRuleset ruleset); // 05288364
+
+error NotUpgradableRuleset(IRuleset ruleset); // 9cb2735d
+
+error ForbiddenToApply(uint256 tokenId); // 6e336b92
+
 // Artwork
 
-error Untransferable(uint256 tokenId); // 4dd940c2
+error ForbiddenToTransfer(uint256 tokenId); // 69afc2df
 
-error Uncopiable(uint256 tokenId); // c3780b51
+error ForbiddenToCopy(uint256 tokenId); // 78941072
 
-error Unburnable(uint256 tokenId); // 16ae3e98
-
-error Unusable(uint256 tokenId); // 5e73191c
+error ForbiddenToBurn(uint256 tokenId); // baa5861f
 
 // Metadata
 

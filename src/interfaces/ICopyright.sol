@@ -13,10 +13,7 @@ import {IERC721Metadata} from "./IERC721Metadata.sol";
 import {IERC2981} from "./IERC2981.sol";
 
 interface ICopyright is IERC721, IERC721Metadata, IERC2981 {
-    event PropertyRulesetUpdated(
-        uint256 indexed tokenId,
-        IRuleset indexed ruleset
-    );
+    event RulesetUpdated(uint256 indexed tokenId, IRuleset indexed ruleset);
 
     function configurator() external view returns (IConfigurator target);
 
@@ -26,6 +23,8 @@ interface ICopyright is IERC721, IERC721Metadata, IERC2981 {
         returns (IMetadataRegistry target);
 
     function artwork() external view returns (IArtwork target);
+
+    function totalSupply() external view returns (uint256 amount);
 
     function metadataOf(uint256 tokenId)
         external
@@ -38,22 +37,6 @@ interface ICopyright is IERC721, IERC721Metadata, IERC2981 {
         external
         view
         returns (IRuleset ruleset);
-
-    function getRoyaltyToken(Action action, uint256 tokenId)
-        external
-        view
-        returns (IERC20 token);
-
-    function getRoyaltyReceiver(Action action, uint256 tokenId)
-        external
-        view
-        returns (address receiver);
-
-    function getRoyaltyAmount(
-        Action action,
-        uint256 tokenId,
-        uint256 data
-    ) external view returns (uint256 amount);
 
     function getIngredients(uint256 tokenId)
         external
@@ -76,5 +59,5 @@ interface ICopyright is IERC721, IERC721Metadata, IERC2981 {
 
     function waive(uint256 tokenId) external;
 
-    function updateRule(uint256 tokenId, IRuleset ruleset) external;
+    function updateRuleset(uint256 tokenId, IRuleset ruleset) external;
 }

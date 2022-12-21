@@ -33,9 +33,9 @@ contract DeployCore is Script {
 
         // configurator
         IFeeFormula constantFeeFormula = new ConstantFeeFormula(
-            100000000000000000
+            50000000000000000
         );
-        IFeeFormula linearFeeFormula = new LinearFeeFormula(50000000000000000);
+        IFeeFormula linearFeeFormula = new LinearFeeFormula(10000000000000000);
 
         Configurator configurator = new Configurator();
         configurator.setTreatury(msg.sender);

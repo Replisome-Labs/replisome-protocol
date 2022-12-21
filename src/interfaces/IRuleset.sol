@@ -3,7 +3,6 @@ pragma solidity ^0.8.13;
 
 import {IERC165} from "./IERC165.sol";
 import {IERC20} from "./IERC20.sol";
-import {Action} from "./Structs.sol";
 
 interface IRuleset is IERC165 {
     function isUpgradable() external view returns (bool ok);
@@ -17,23 +16,40 @@ interface IRuleset is IERC165 {
 
     function canBurn(address actor) external view returns (uint256 allowance);
 
-    function canUse(address actor, IRuleset ruleset)
+    function canApply(address actor, IRuleset ruleset)
         external
         view
         returns (uint256 allownace);
 
-    function getRoyaltyReceiver(Action action)
+    function getSaleRoyalty(uint256 salePrice)
         external
         view
-        returns (address receiver);
+        returns (address receiver, uint256 royaltyAmount);
 
-    function getRoyaltyToken(Action action)
+    function getCopyRoyalty(uint256 amount)
         external
         view
-        returns (IERC20 token);
+        returns (
+            address receiver,
+            IERC20 token,
+            uint256 royaltyAmount
+        );
 
-    function getRoyaltyAmount(Action action, uint256 price)
+    function getBurnRoyalty(uint256 amount)
         external
         view
-        returns (uint256 amount);
+        returns (
+            address receiver,
+            IERC20 token,
+            uint256 royaltyAmount
+        );
+
+    function getUtilizeRoyalty(uint256 amount)
+        external
+        view
+        returns (
+            address receiver,
+            IERC20 token,
+            uint256 royaltyAmount
+        );
 }

@@ -16,20 +16,72 @@ contract MockRuleset is IRuleset, ERC165 {
 
     mapping(address => uint256) public canBurn;
 
-    mapping(address => mapping(IRuleset => uint256)) public canUse;
+    mapping(address => mapping(IRuleset => uint256)) public canApply;
 
-    mapping(Action => address) public getRoyaltyReceiver;
+    address public saleRoyaltyReceiver;
+    uint256 public saleRoyaltyAmount;
 
-    mapping(Action => IERC20) public getRoyaltyToken;
-
-    mapping(Action => uint256) public royaltyPercantage;
-
-    function getRoyaltyAmount(Action action, uint256 price)
+    function getSaleRoyalty(uint256)
         external
         view
-        returns (uint256 amount)
+        returns (address receiver, uint256 royaltyAmount)
     {
-        amount = (price * royaltyPercantage[action]) / uint256(100);
+        receiver = saleRoyaltyReceiver;
+        royaltyAmount = saleRoyaltyAmount;
+    }
+
+    address public copyRoyaltyReceiver;
+    IERC20 public copyRoyaltyToken;
+    uint256 public copyRoyaltyAmount;
+
+    function getCopyRoyalty(uint256)
+        external
+        view
+        returns (
+            address receiver,
+            IERC20 token,
+            uint256 royaltyAmount
+        )
+    {
+        receiver = copyRoyaltyReceiver;
+        token = copyRoyaltyToken;
+        royaltyAmount = copyRoyaltyAmount;
+    }
+
+    address public burnRoyaltyReceiver;
+    IERC20 public burnRoyaltyToken;
+    uint256 public burnRoyaltyAmount;
+
+    function getBurnRoyalty(uint256)
+        external
+        view
+        returns (
+            address receiver,
+            IERC20 token,
+            uint256 royaltyAmount
+        )
+    {
+        receiver = burnRoyaltyReceiver;
+        token = burnRoyaltyToken;
+        royaltyAmount = burnRoyaltyAmount;
+    }
+
+    address public utilizeRoyaltyReceiver;
+    IERC20 public utilizeRoyaltyToken;
+    uint256 public utilizeRoyaltyAmount;
+
+    function getUtilizeRoyalty(uint256)
+        external
+        view
+        returns (
+            address receiver,
+            IERC20 token,
+            uint256 royaltyAmount
+        )
+    {
+        receiver = utilizeRoyaltyReceiver;
+        token = utilizeRoyaltyToken;
+        royaltyAmount = utilizeRoyaltyAmount;
     }
 
     function supportsInterface(bytes4 interfaceId)

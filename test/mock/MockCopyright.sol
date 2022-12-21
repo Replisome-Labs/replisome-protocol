@@ -24,6 +24,8 @@ contract MockCopyright is ICopyright, ERC721("HiggsPixel Copyright", "HPCR") {
 
     IArtwork public artwork;
 
+    uint256 public totalSupply;
+
     mapping(uint256 => IMetadata) public _metadataContractOf;
 
     mapping(uint256 => uint256) public _metadataIdOf;
@@ -56,16 +58,6 @@ contract MockCopyright is ICopyright, ERC721("HiggsPixel Copyright", "HPCR") {
     {
         ruleset = _rulesetOf[tokenId];
     }
-
-    // mapping from action to tokenId to token
-    mapping(Action => mapping(uint256 => IERC20)) public getRoyaltyToken;
-
-    // mapping from action to tokenId to receiver
-    mapping(Action => mapping(uint256 => address)) public getRoyaltyReceiver;
-
-    // mapping from action to tokenId to value to amount
-    mapping(Action => mapping(uint256 => mapping(uint256 => uint256)))
-        public getRoyaltyAmount;
 
     function getIngredients(uint256 tokenId)
         external
@@ -100,7 +92,7 @@ contract MockCopyright is ICopyright, ERC721("HiggsPixel Copyright", "HPCR") {
         return;
     }
 
-    function updateRule(uint256, IRuleset) external pure {
+    function updateRuleset(uint256, IRuleset) external pure {
         return;
     }
 
