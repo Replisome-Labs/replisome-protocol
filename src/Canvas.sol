@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.13;
+pragma solidity ^0.8.17;
 
 import {Layer, Action} from "./interfaces/Structs.sol";
 import {IArtwork} from "./interfaces/IArtwork.sol";

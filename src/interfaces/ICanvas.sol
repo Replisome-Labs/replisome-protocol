@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.13;
+pragma solidity ^0.8.17;
 
 import {Layer, Action} from "./Structs.sol";
 import {IConfigurator} from "./IConfigurator.sol";

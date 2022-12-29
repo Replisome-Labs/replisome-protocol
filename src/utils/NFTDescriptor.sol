@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.13;
+pragma solidity ^0.8.17;
 
 import {INFTRenderer} from "../interfaces/INFTRenderer.sol";
 import {Base64} from "../libraries/Base64.sol";

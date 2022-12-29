@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.13;
+pragma solidity ^0.8.17;
 
 import {FrameSizeMistatch, FrameSizeOverflow, FrameOutOfBoundary, ColorNotFound} from "../interfaces/Errors.sol";
 import {Rotate, Flip} from "../interfaces/Structs.sol";

@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.13;
+pragma solidity ^0.8.17;
 
 import {IMetadata} from "../../src/interfaces/IMetadata.sol";
 import {ICopyright} from "../../src/interfaces/ICopyright.sol";
