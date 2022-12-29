@@ -22,7 +22,7 @@ contract CopyrightRenderer is INFTRenderer {
         copyright = copyright_;
     }
 
-    function generateSVG(uint256 tokenId)
+    function generateHTML(uint256 tokenId)
         public
         view
         returns (string memory svg)
@@ -122,7 +122,7 @@ contract CopyrightRenderer is INFTRenderer {
         returns (string memory partialSVG)
     {
         string memory image = Base64.encode(
-            bytes(metadata.generateSVG(metadataId))
+            bytes(metadata.generateHTML(metadataId))
         );
         partialSVG = string(
             abi.encodePacked(

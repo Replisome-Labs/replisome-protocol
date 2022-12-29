@@ -20,7 +20,7 @@ library NFTDescriptor {
         view
         returns (string memory)
     {
-        string memory image = generateSVGImage(params.renderer, params.id);
+        string memory image = generateImage(params.renderer, params.id);
 
         // prettier-ignore
         return string(
@@ -28,7 +28,7 @@ library NFTDescriptor {
                 'data:application/json;base64,',
                 Base64.encode(
                     bytes(
-                        abi.encodePacked('{"name":"', params.name, '", "description":"', params.description, '", "image": "', 'data:image/svg+xml;base64,', image, '"}')
+                        abi.encodePacked('{"name":"', params.name, '", "description":"', params.description, '", "image": "', 'data:text/html;base64,', image, '"}')
                     )
                 )
             )
@@ -38,15 +38,15 @@ library NFTDescriptor {
     /**
      * @notice Generate an SVG image for use in the NFT URI.
      */
-    function generateSVGImage(INFTRenderer renderer, uint256 id)
+    function generateImage(INFTRenderer renderer, uint256 id)
         public
         view
-        returns (string memory svg)
+        returns (string memory html)
     {
         if (address(renderer) == address(0)) {
-            svg = "";
+            html = "";
         } else {
-            svg = Base64.encode(bytes(renderer.generateSVG(id)));
+            html = Base64.encode(bytes(renderer.generateHTML(id)));
         }
     }
 }

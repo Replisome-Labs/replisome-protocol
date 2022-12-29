@@ -52,19 +52,21 @@ contract RasterMetadata is IMetadata, ERC165 {
         ok = address(metadata) == address(this);
     }
 
-    function generateSVG(uint256 metadataId)
+    function generateHTML(uint256 metadataId)
         external
         view
-        returns (string memory svg)
+        returns (string memory html)
     {
         Meta storage meta = _metaOf[metadataId];
-        RasterRenderer.SVGParams memory params = RasterRenderer.SVGParams({
+        RasterRenderer.Params memory params = RasterRenderer.Params({
+            metadata: address(this),
+            metadataId: metadataId,
             width: meta.width,
             height: meta.height,
             colors: meta.palette.getColors(),
             data: meta.content
         });
-        svg = RasterRenderer.generateSVG(params);
+        html = RasterRenderer.generateHTML(params);
     }
 
     function generateRawData(uint256 metadataId)

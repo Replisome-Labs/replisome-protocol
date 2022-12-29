@@ -17,7 +17,7 @@ contract MockMetadata is IMetadata, ERC165 {
     mapping(bytes => uint256) public dataToId;
     mapping(uint256 => bytes) public idToData;
 
-    function generateSVG(uint256 metadataId)
+    function generateHTML(uint256 metadataId)
         external
         pure
         returns (string memory svg)

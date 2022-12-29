@@ -43,10 +43,10 @@ contract RasterMetadataTest is Test {
         vm.expectEmit(true, false, false, false);
         emit Created(1, data);
 
-        metadata.create(data);
+        uint256 id = metadata.create(data);
 
         // emit log_bytes(metadata.generateRawData(id));
-        // emit log(metadata.generateSVG(id));
+        emit log(metadata.generateHTML(id));
     }
 
     function testCreateWithLayers() public {
@@ -85,7 +85,7 @@ contract RasterMetadataTest is Test {
         uint256 id = metadata.create(data);
 
         emit log_bytes(metadata.generateRawData(id));
-        emit log(metadata.generateSVG(id));
+        // emit log(metadata.generateHTML(id));
     }
 
     function mockLayer() public {

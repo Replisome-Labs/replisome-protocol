@@ -12,10 +12,10 @@ interface IMetadata is IERC165 {
 
     function totalSupply() external view returns (uint256 amount);
 
-    function generateSVG(uint256 metadataId)
+    function generateHTML(uint256 metadataId)
         external
         view
-        returns (string memory svg);
+        returns (string memory html);
 
     function generateRawData(uint256 metadataId)
         external

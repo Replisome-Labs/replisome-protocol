@@ -160,6 +160,7 @@ library RasterEngine {
                 baseHeight
             );
         }
+        scaleFrame(frame, baseWidth, baseHeight);
     }
 
     function rotateFrame(Frame memory frame, Rotate rotate) internal pure {
@@ -175,7 +176,7 @@ library RasterEngine {
                 if (pixel == bytes1(0)) continue;
 
                 x = i % frame.width;
-                y = i / frame.height;
+                y = i / frame.width;
 
                 if (rotate == Rotate.D90) {
                     temp = x;
@@ -209,7 +210,7 @@ library RasterEngine {
                 if (pixel == bytes1(0)) continue;
 
                 x = i % frame.width;
-                y = i / frame.height;
+                y = i / frame.width;
 
                 if (flip == Flip.Horizontal) {
                     x = frame.width - x - 1;
@@ -249,14 +250,12 @@ library RasterEngine {
                 if (pixel == bytes1(0)) continue;
 
                 x = (i % frame.width) + translateX;
-                y = i / frame.height + translateY;
+                y = i / frame.width + translateY;
                 pos = y * baseWidth + x;
                 newData[pos] = pixel;
             }
         }
         frame.data = newData;
-
-        scaleFrame(frame, baseWidth, baseHeight);
     }
 
     function scaleFrame(
