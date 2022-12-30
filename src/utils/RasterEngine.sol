@@ -94,12 +94,12 @@ library RasterEngine {
         ) {
             revert FrameSizeMistatch();
         }
-        bytes1 pixel;
-        unchecked {
-            for (uint256 i = 0; i < layerFrame.data.length; i++) {
-                pixel = layerFrame.data[i];
-                if (pixel == bytes1(0)) continue;
-                baseFrame.data[i] = pixel;
+        for (uint256 i = 0; i < layerFrame.data.length; ) {
+            if (layerFrame.data[i] != bytes1(0)) {
+                baseFrame.data[i] = layerFrame.data[i];
+            }
+            unchecked {
+                ++i;
             }
         }
     }
@@ -112,11 +112,9 @@ library RasterEngine {
         bytes1 pixel;
         bytes4 color;
         uint8 colorIndex;
-        unchecked {
-            for (uint256 i = 0; i < frame.data.length; i++) {
-                pixel = frame.data[i];
-                if (pixel == bytes1(0)) continue;
-
+        for (uint256 i = 0; i < frame.data.length; ) {
+            pixel = frame.data[i];
+            if (pixel != bytes1(0)) {
                 color = getColor(fromPalette, uint8(pixel));
                 colorIndex = getColorIndex(toPalette, color);
                 if (colorIndex == uint8(0)) {
@@ -124,6 +122,10 @@ library RasterEngine {
                 }
 
                 frame.data[i] = bytes1(colorIndex);
+            }
+
+            unchecked {
+                ++i;
             }
         }
     }
@@ -159,17 +161,14 @@ library RasterEngine {
         uint256 x;
         uint256 y;
         for (uint256 i = 0; i < frame.data.length; ) {
-            if (frame.data[i] == bytes1(0)) continue;
-
-            x = i % frame.width;
-            y = i / frame.width;
-
-            (x, y) = rotatePixel(x, y, frame.width, frame.height, rotate);
-            (x, y) = flipPixel(x, y, frame.width, frame.height, flip);
-            (x, y) = translatePixel(x, y, translateX, translateY);
-
-            newData[y * baseWidth + x] = frame.data[i];
-
+            if (frame.data[i] != bytes1(0)) {
+                x = i % frame.width;
+                y = i / frame.width;
+                (x, y) = rotatePixel(x, y, frame.width, frame.height, rotate);
+                (x, y) = flipPixel(x, y, frame.width, frame.height, flip);
+                (x, y) = translatePixel(x, y, translateX, translateY);
+                newData[y * baseWidth + x] = frame.data[i];
+            }
             unchecked {
                 ++i;
             }

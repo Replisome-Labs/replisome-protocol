@@ -41,7 +41,7 @@ deploy-fuji:
 		if test -f "$${file}"; then \
 			contract=$$(echo "$${file}" | sed 's/.*_\(.*\)\.s\.sol/\1/'); \
 			forge script $${file}:$${contract} --rpc-url ${FUJI_RPC_URL}  --private-key ${PRIVATE_KEY} --broadcast -vvvv; \
-			sleep 2; \
+			sleep 5; \
 		fi \
 	done
 
