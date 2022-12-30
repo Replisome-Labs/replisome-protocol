@@ -1,7 +1,8 @@
-[default]
+[profile.default]
 src = 'src'
 out = 'out'
 libs = ['lib']
 auto_detect_solc = true
+fs_permissions = [{ access = "read-write", path = "./addresses/"}]
 
 # See more config options https://github.com/foundry-rs/foundry/tree/master/config
