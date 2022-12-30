@@ -145,93 +145,9 @@ library RasterEngine {
         uint256 baseWidth,
         uint256 baseHeight
     ) internal pure {
-        if (rotate != Rotate.D0) {
-            rotateFrame(frame, rotate);
+        if (frame.width > baseWidth || frame.height > baseHeight) {
+            revert FrameSizeOverflow();
         }
-        if (flip != Flip.None) {
-            flipFrame(frame, flip);
-        }
-        if (translateX != uint256(0) || translateY != uint256(0)) {
-            translateFrame(
-                frame,
-                translateX,
-                translateY,
-                baseWidth,
-                baseHeight
-            );
-        }
-        scaleFrame(frame, baseWidth, baseHeight);
-    }
-
-    function rotateFrame(Frame memory frame, Rotate rotate) internal pure {
-        bytes memory newData = new bytes(frame.data.length);
-        bytes1 pixel;
-        uint256 x;
-        uint256 y;
-        uint256 pos;
-        uint256 temp;
-        unchecked {
-            for (uint256 i = 0; i < frame.data.length; i++) {
-                pixel = frame.data[i];
-                if (pixel == bytes1(0)) continue;
-
-                x = i % frame.width;
-                y = i / frame.width;
-
-                if (rotate == Rotate.D90) {
-                    temp = x;
-                    x = frame.height - y - 1;
-                    y = temp;
-                } else if (rotate == Rotate.D180) {
-                    x = frame.width - x - 1;
-                    y = frame.height - y - 1;
-                } else if (rotate == Rotate.D270) {
-                    temp = x;
-                    x = y;
-                    y = frame.width - temp - 1;
-                }
-
-                pos = y * frame.width + x;
-                newData[pos] = pixel;
-            }
-        }
-        frame.data = newData;
-    }
-
-    function flipFrame(Frame memory frame, Flip flip) internal pure {
-        bytes memory newData = new bytes(frame.data.length);
-        bytes1 pixel;
-        uint256 x;
-        uint256 y;
-        uint256 pos;
-        unchecked {
-            for (uint256 i = 0; i < frame.data.length; i++) {
-                pixel = frame.data[i];
-                if (pixel == bytes1(0)) continue;
-
-                x = i % frame.width;
-                y = i / frame.width;
-
-                if (flip == Flip.Horizontal) {
-                    x = frame.width - x - 1;
-                } else if (flip == Flip.Vertical) {
-                    y = frame.height - y - 1;
-                }
-
-                pos = y * frame.width + x;
-                newData[pos] = pixel;
-            }
-        }
-        frame.data = newData;
-    }
-
-    function translateFrame(
-        Frame memory frame,
-        uint256 translateX,
-        uint256 translateY,
-        uint256 baseWidth,
-        uint256 baseHeight
-    ) internal pure {
         if (
             frame.width + translateX > baseWidth ||
             frame.height + translateY > baseHeight
@@ -240,33 +156,77 @@ library RasterEngine {
         }
 
         bytes memory newData = new bytes(baseWidth * baseHeight);
-        bytes1 pixel;
         uint256 x;
         uint256 y;
-        uint256 pos;
-        unchecked {
-            for (uint256 i = 0; i < frame.data.length; i++) {
-                pixel = frame.data[i];
-                if (pixel == bytes1(0)) continue;
+        for (uint256 i = 0; i < frame.data.length; ) {
+            if (frame.data[i] == bytes1(0)) continue;
 
-                x = (i % frame.width) + translateX;
-                y = i / frame.width + translateY;
-                pos = y * baseWidth + x;
-                newData[pos] = pixel;
+            x = i % frame.width;
+            y = i / frame.width;
+
+            (x, y) = rotatePixel(x, y, frame.width, frame.height, rotate);
+            (x, y) = flipPixel(x, y, frame.width, frame.height, flip);
+            (x, y) = translatePixel(x, y, translateX, translateY);
+
+            newData[y * baseWidth + x] = frame.data[i];
+
+            unchecked {
+                ++i;
             }
         }
+        frame.width = baseWidth;
+        frame.height = baseHeight;
         frame.data = newData;
     }
 
-    function scaleFrame(
-        Frame memory frame,
+    function rotatePixel(
+        uint256 x,
+        uint256 y,
         uint256 width,
-        uint256 height
-    ) internal pure {
-        if (frame.width > width || frame.height > height) {
-            revert FrameSizeOverflow();
+        uint256 height,
+        Rotate rotate
+    ) internal pure returns (uint256 newX, uint256 newY) {
+        if (rotate == Rotate.D0) {
+            newX = x;
+            newY = y;
+        } else if (rotate == Rotate.D90) {
+            newX = height - y - 1;
+            newY = x;
+        } else if (rotate == Rotate.D180) {
+            newX = width - x - 1;
+            newY = height - y - 1;
+        } else if (rotate == Rotate.D270) {
+            newX = y;
+            newY = width - x - 1;
         }
-        frame.width = width;
-        frame.height = height;
+    }
+
+    function flipPixel(
+        uint256 x,
+        uint256 y,
+        uint256 width,
+        uint256 height,
+        Flip flip
+    ) internal pure returns (uint256 newX, uint256 newY) {
+        if (flip == Flip.None) {
+            newX = x;
+            newY = y;
+        } else if (flip == Flip.Horizontal) {
+            newX = width - x - 1;
+            newY = y;
+        } else if (flip == Flip.Vertical) {
+            newX = x;
+            newY = height - y - 1;
+        }
+    }
+
+    function translatePixel(
+        uint256 x,
+        uint256 y,
+        uint256 translateX,
+        uint256 translateY
+    ) internal pure returns (uint256 newX, uint256 newY) {
+        newX = x + translateX;
+        newY = y + translateY;
     }
 }
