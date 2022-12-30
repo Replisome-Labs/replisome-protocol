@@ -2,7 +2,7 @@
 pragma solidity ^0.8.17;
 
 import "forge-std/Script.sol";
-import {Configurator} from "../src/Configurator.sol";
+import {IConfigurator} from "../src/interfaces/IConfigurator.sol";
 import {ConstantFeeFormula} from "../src/fees/ConstantFeeFormula.sol";
 import {LinearFeeFormula} from "../src/fees/LinearFeeFormula.sol";
 import {IFeeFormula} from "../src/interfaces/IFeeFormula.sol";
@@ -24,22 +24,36 @@ contract DeployConfigurator is Script {
             )
         );
 
+        string memory configuratorAddress = vm.readFile(
+            string(
+                abi.encodePacked(
+                    "./addresses/",
+                    vm.toString(block.chainid),
+                    "/Configurator"
+                )
+            )
+        );
+
+        IConfigurator configurator = IConfigurator(
+            DeployHelper.parseAddress(configuratorAddress)
+        );
+
         vm.startBroadcast();
 
-        // IFeeFormula constantFeeFormula = new ConstantFeeFormula(
-        //     50000000000000000
-        // );
-        // IFeeFormula linearFeeFormula = new LinearFeeFormula(10000000000000000);
+        IFeeFormula constantFeeFormula = new ConstantFeeFormula(
+            50000000000000000
+        );
+        IFeeFormula linearFeeFormula = new LinearFeeFormula(10000000000000000);
 
-        Configurator configurator = new Configurator();
+        // Configurator configurator = new Configurator();
         configurator.setTreatury(msg.sender);
         configurator.setFeeToken(
             IERC20(DeployHelper.parseAddress(wavaxAddress))
         );
-        // configurator.setFeeFormula(Action.CopyrightClaim, constantFeeFormula);
-        // configurator.setFeeFormula(Action.CopyrightWaive, constantFeeFormula);
-        // configurator.setFeeFormula(Action.ArtworkCopy, linearFeeFormula);
-        // configurator.setFeeFormula(Action.ArtworkBurn, linearFeeFormula);
+        configurator.setFeeFormula(Action.CopyrightClaim, constantFeeFormula);
+        configurator.setFeeFormula(Action.CopyrightWaive, constantFeeFormula);
+        configurator.setFeeFormula(Action.ArtworkCopy, linearFeeFormula);
+        configurator.setFeeFormula(Action.ArtworkBurn, linearFeeFormula);
 
         vm.stopBroadcast();
 
