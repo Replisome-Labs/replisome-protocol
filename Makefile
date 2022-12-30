@@ -36,10 +36,14 @@ anvil:; anvil -m 'test test test test test test test test test test test junk'
 deploy-avalanche:; @forge script script/${contract}.s.sol:${contract} --rpc-url ${AVALANCHE_RPC_URL}  --private-key ${PRIVATE_KEY} --broadcast -vvvv
 
 # use the "@" to hide the command from your shell 
-# deploy-fuji:; ./script/* 
-    # for file in $^ ; do \
-    #     echo "Hello" ; \
-    # done
+deploy-fuji:
+	@for file in ./script/*; do \
+		if test -f "$${file}"; then \
+			contract=$$(echo "$${file}" | sed 's/.*_\(.*\)\.s\.sol/\1/'); \
+			forge script $${file}:$${contract} --rpc-url ${FUJI_RPC_URL}  --private-key ${PRIVATE_KEY} --broadcast -vvvv; \
+			sleep 2; \
+		fi \
+	done
 
 # This is the private key of account from the mnemonic from the "make anvil" command
 deploy-anvil:; @forge script script/${contract}.s.sol:${contract} --rpc-url http://localhost:8545  --private-key 0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80 --broadcast 
@@ -47,9 +51,4 @@ deploy-anvil:; @forge script script/${contract}.s.sol:${contract} --rpc-url http
 # use the "@" to hide the command from your shell 
 run-fuji:; @forge script script/${script}.s.sol:$(call contractName, ${script}) --rpc-url ${FUJI_RPC_URL}  --private-key ${PRIVATE_KEY} --broadcast -vvvv
 
-MYDIR = .
-LIST = one two three
-all:
-	for i in $(LIST); do \
-		echo $$i; \
-	done
+

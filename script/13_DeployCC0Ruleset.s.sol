@@ -4,7 +4,7 @@ pragma solidity ^0.8.17;
 import "forge-std/Script.sol";
 import {CC0Ruleset} from "../src/rulesets/CC0Ruleset.sol";
 
-contract DeployMetadataRegistry is Script {
+contract DeployCC0Ruleset is Script {
     using stdJson for string;
 
     function run() public {
