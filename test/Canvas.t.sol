@@ -9,7 +9,7 @@ import {Copyright} from "../src/Copyright.sol";
 import {Artwork} from "../src/Artwork.sol";
 import {RasterMetadata, Layer} from "../src/RasterMetadata.sol";
 import {Rotate, Flip} from "../src/utils/RasterEngine.sol";
-import {CC0Ruleset} from "../src/rulesets/CC0Ruleset.sol";
+import {CC0} from "../src/rulesets/CC0.sol";
 import {ERC1155Receiver} from "../src/libraries/ERC1155Receiver.sol";
 import {ERC721Receiver} from "../src/libraries/ERC721Receiver.sol";
 
@@ -24,7 +24,7 @@ contract CanvasTest is Test, ERC1155Receiver, ERC721Receiver {
     Copyright public copyright;
     Artwork public artwork;
     RasterMetadata public metadata;
-    CC0Ruleset public ruleset;
+    CC0 public ruleset;
 
     function setUp() public {
         configurator = new Configurator();
@@ -33,7 +33,7 @@ contract CanvasTest is Test, ERC1155Receiver, ERC721Receiver {
         artwork = new Artwork(configurator, copyright);
         canvas = new Canvas(configurator, copyright, artwork);
         metadata = new RasterMetadata(copyright);
-        ruleset = new CC0Ruleset();
+        ruleset = new CC0();
 
         metadataRegistry.register(metadata);
 

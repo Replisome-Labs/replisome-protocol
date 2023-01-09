@@ -6,7 +6,7 @@ import {IERC20} from "../interfaces/IERC20.sol";
 import {IRuleset} from "../interfaces/IRuleset.sol";
 import {ERC165} from "../libraries/ERC165.sol";
 
-contract CC0Ruleset is IRuleset, ERC165 {
+contract CC0 is IRuleset, ERC165 {
     function supportsInterface(bytes4 interfaceId)
         public
         view

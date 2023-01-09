@@ -2,15 +2,15 @@
 pragma solidity ^0.8.17;
 
 import "forge-std/Script.sol";
-import {CC0} from "../src/rulesets/CC0.sol";
+import {BasicFeesFactory} from "../src/rulesets/BasicFeesFactory.sol";
 
-contract DeployCC0Ruleset is Script {
+contract DeployBasicFeesFactory is Script {
     using stdJson for string;
 
     function run() public {
         vm.startBroadcast();
 
-        CC0 ruleset = new CC0();
+        BasicFeesFactory ruleset = new BasicFeesFactory();
 
         vm.stopBroadcast();
 
@@ -23,7 +23,7 @@ contract DeployCC0Ruleset is Script {
             vm.projectRoot(),
             "/script/output/",
             vm.toString(block.chainid),
-            "/CC0.json"
+            "/BasicFeesFactory.json"
         );
 
         json.write(outputPath);
