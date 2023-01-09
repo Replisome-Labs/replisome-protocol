@@ -2,15 +2,33 @@
 pragma solidity ^0.8.17;
 
 import {FrameSizeMistatch, FrameSizeOverflow, FrameOutOfBoundary, ColorNotFound} from "../interfaces/Errors.sol";
-import {Rotate, Flip} from "../interfaces/Structs.sol";
+
+enum Rotate {
+    D0,
+    D90,
+    D180,
+    D270
+}
+
+enum Flip {
+    None,
+    Horizontal,
+    Vertical
+}
+
+struct Palette {
+    uint8 colorCount;
+    mapping(uint8 => bytes4) colorOf;
+    mapping(bytes4 => uint8) colorIndexOf;
+}
+
+struct Frame {
+    uint256 width;
+    uint256 height;
+    bytes data;
+}
 
 library RasterEngine {
-    struct Palette {
-        uint8 colorCount;
-        mapping(uint8 => bytes4) colorOf;
-        mapping(bytes4 => uint8) colorIndexOf;
-    }
-
     function getColorIndex(Palette storage palette, bytes4 color)
         public
         view
@@ -76,12 +94,6 @@ library RasterEngine {
             }
         }
         delete palette.colorCount;
-    }
-
-    struct Frame {
-        uint256 width;
-        uint256 height;
-        bytes data;
     }
 
     function addFrame(Frame memory baseFrame, Frame memory layerFrame)

@@ -1,10 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.17;
 
-import {Property, Layer, Action} from "./interfaces/Structs.sol";
 import {Unauthorized, AlreadyMinted, NotMinted, InvalidMetadata, InexistenceMetadata, InvalidRuleset, NotUpgradableRuleset, ForbiddenToApply} from "./interfaces/Errors.sol";
-import {ICopyright} from "./interfaces/ICopyright.sol";
-import {IConfigurator} from "./interfaces/IConfigurator.sol";
+import {ICopyright, Property} from "./interfaces/ICopyright.sol";
+import {IConfigurator, Action} from "./interfaces/IConfigurator.sol";
 import {IMetadataRegistry} from "./interfaces/IMetadataRegistry.sol";
 import {IArtwork} from "./interfaces/IArtwork.sol";
 import {IMetadata} from "./interfaces/IMetadata.sol";
@@ -19,7 +18,7 @@ import {ERC165Checker} from "./libraries/ERC165Checker.sol";
 import {NFTDescriptor} from "./utils/NFTDescriptor.sol";
 import {Artwork} from "./Artwork.sol";
 
-contract Copyright is ICopyright, ERC721("HiggsPixel Copyright", "HPCR") {
+contract Copyright is ICopyright, ERC721("Replisome Copyright", "RPS-CR") {
     using SafeERC20 for IERC20;
     using ERC165Checker for address;
 
@@ -70,13 +69,13 @@ contract Copyright is ICopyright, ERC721("HiggsPixel Copyright", "HPCR") {
             revert NotMinted(tokenId);
         }
         string memory name = string(
-            abi.encodePacked("HiggsPixel Copyright #", tokenId)
+            abi.encodePacked("Replisome Copyright #", tokenId)
         );
         string memory description = string(
             abi.encodePacked(
                 "Copyright #",
                 tokenId,
-                " is powered by HiggsPixel"
+                " is powered by Replisome.xyz"
             )
         );
         return

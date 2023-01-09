@@ -1,10 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.17;
 
-import {Property, Action} from "../../src/interfaces/Structs.sol";
-import {IConfigurator} from "../../src/interfaces/IConfigurator.sol";
+import {IConfigurator, Action} from "../../src/interfaces/IConfigurator.sol";
 import {IMetadataRegistry} from "../../src/interfaces/IMetadataRegistry.sol";
-import {ICopyright} from "../../src/interfaces/ICopyright.sol";
+import {ICopyright, Property} from "../../src/interfaces/ICopyright.sol";
 import {IArtwork} from "../../src/interfaces/IArtwork.sol";
 import {IMetadata} from "../../src/interfaces/IMetadata.sol";
 import {IRuleset} from "../../src/interfaces/IRuleset.sol";
@@ -14,7 +13,7 @@ import {IERC20} from "../../src/interfaces/IERC20.sol";
 import {IERC721Metadata} from "../../src/interfaces/IERC721Metadata.sol";
 import {ERC721} from "../../src/libraries/ERC721.sol";
 
-contract MockCopyright is ICopyright, ERC721("HiggsPixel Copyright", "HPCR") {
+contract MockCopyright is ICopyright, ERC721("Replisome Copyright", "RPS-CR") {
     /**
         Mock Copyright
      */

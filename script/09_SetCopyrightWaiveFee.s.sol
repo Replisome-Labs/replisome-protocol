@@ -3,9 +3,8 @@ pragma solidity ^0.8.17;
 
 import "forge-std/Script.sol";
 import {ConstantFeeFormula} from "../src/fees/ConstantFeeFormula.sol";
-import {IConfigurator} from "../src/interfaces/IConfigurator.sol";
+import {IConfigurator, Action} from "../src/interfaces/IConfigurator.sol";
 import {IFeeFormula} from "../src/interfaces/IFeeFormula.sol";
-import {Action} from "../src/interfaces/Structs.sol";
 
 contract SetCopyrightWaiveFee is Script {
     using stdJson for string;

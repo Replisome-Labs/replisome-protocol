@@ -1,10 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.17;
 
-import {Action} from "./interfaces/Structs.sol";
 import {Unauthorized, ForbiddenToTransfer, ForbiddenToCopy, ForbiddenToBurn, LengthMismatch, UnsafeRecipient} from "./interfaces/Errors.sol";
 import {IArtwork} from "./interfaces/IArtwork.sol";
-import {IConfigurator} from "./interfaces/IConfigurator.sol";
+import {IConfigurator, Action} from "./interfaces/IConfigurator.sol";
 import {ICopyright} from "./interfaces/ICopyright.sol";
 import {IMetadata} from "./interfaces/IMetadata.sol";
 import {IRuleset} from "./interfaces/IRuleset.sol";
@@ -75,13 +74,13 @@ contract Artwork is IArtwork, ERC1155 {
         returns (string memory)
     {
         string memory name = string(
-            abi.encodePacked("HiggsPixel Artwork #", tokenId.toString())
+            abi.encodePacked("Replisome Artwork #", tokenId.toString())
         );
         string memory description = string(
             abi.encodePacked(
                 "Artwork #",
                 tokenId.toString(),
-                " is powered by HiggsPixel"
+                " is powered by Replisome.xyz"
             )
         );
         (IMetadata metadata, uint256 metadataId) = copyright.metadataOf(

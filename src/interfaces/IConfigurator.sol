@@ -1,11 +1,19 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.17;
 
-import {Action} from "./Structs.sol";
 import {IERC20} from "./IERC20.sol";
 import {INFTRenderer} from "./INFTRenderer.sol";
 import {IFeeFormula} from "./IFeeFormula.sol";
 import {IMetadata} from "./IMetadata.sol";
+
+enum Action {
+    CopyrightClaim,
+    CopyrightWaive,
+    CopyrightSale,
+    ArtworkCopy,
+    ArtworkBurn,
+    ArtworkUtilize
+}
 
 interface IConfigurator {
     event TreaturyUpdated(address indexed vault);

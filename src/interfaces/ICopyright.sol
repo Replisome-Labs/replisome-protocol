@@ -1,9 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.17;
 
-import {Action} from "./Structs.sol";
 import {IArtwork} from "./IArtwork.sol";
-import {IConfigurator} from "./IConfigurator.sol";
+import {IConfigurator, Action} from "./IConfigurator.sol";
 import {IMetadata} from "./IMetadata.sol";
 import {IMetadataRegistry} from "./IMetadataRegistry.sol";
 import {IRuleset} from "./IRuleset.sol";
@@ -11,6 +10,13 @@ import {IERC20} from "./IERC20.sol";
 import {IERC721} from "./IERC721.sol";
 import {IERC721Metadata} from "./IERC721Metadata.sol";
 import {IERC2981} from "./IERC2981.sol";
+
+struct Property {
+    address creator;
+    IRuleset ruleset;
+    IMetadata metadata;
+    uint256 metadataId;
+}
 
 interface ICopyright is IERC721, IERC721Metadata, IERC2981 {
     event RulesetUpdated(uint256 indexed tokenId, IRuleset indexed ruleset);

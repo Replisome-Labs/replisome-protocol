@@ -1,8 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.17;
 
-import {Action} from "./interfaces/Structs.sol";
-import {IConfigurator} from "./interfaces/IConfigurator.sol";
+import {IConfigurator, Action} from "./interfaces/IConfigurator.sol";
 import {IERC20} from "./interfaces/IERC20.sol";
 import {INFTRenderer} from "./interfaces/INFTRenderer.sol";
 import {IFeeFormula} from "./interfaces/IFeeFormula.sol";

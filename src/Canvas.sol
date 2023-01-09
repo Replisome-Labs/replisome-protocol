@@ -1,10 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.17;
 
-import {Layer, Action} from "./interfaces/Structs.sol";
 import {IArtwork} from "./interfaces/IArtwork.sol";
 import {ICanvas} from "./interfaces/ICanvas.sol";
-import {IConfigurator} from "./interfaces/IConfigurator.sol";
+import {IConfigurator, Action} from "./interfaces/IConfigurator.sol";
 import {ICopyright} from "./interfaces/ICopyright.sol";
 import {IERC165} from "./interfaces/IERC165.sol";
 import {IERC20} from "./interfaces/IERC20.sol";

@@ -3,7 +3,7 @@ pragma solidity ^0.8.17;
 
 import {IRuleset} from "./IRuleset.sol";
 import {IMetadata} from "./IMetadata.sol";
-import {Layer} from "./Structs.sol";
+import {Layer} from "../RasterMetadata.sol";
 
 // Common
 
@@ -45,8 +45,6 @@ error InvalidCreator(address account); // fec99a9d
 
 error InvalidMetadata(IMetadata metadata); // dfc613a9
 
-error InvalidLayer(Layer layer); // 1dac55a7
-
 error InvalidRuleset(IRuleset ruleset); // 05288364
 
 error NotUpgradableRuleset(IRuleset ruleset); // 9cb2735d
@@ -72,6 +70,8 @@ error InexistenceMetadata(IMetadata metadata, uint256 metadataId); // f8a7ace8
 error UnsupportedMetadata(IMetadata metadata); // 1c041959
 
 error AlreadyCreated(uint256 metadataId); // f2de5dcb
+
+error InvalidLayer(Layer layer); // 1dac55a7
 
 error LayerNotExisted(Layer layer); // 2622b7b5
 

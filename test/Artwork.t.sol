@@ -3,10 +3,9 @@ pragma solidity ^0.8.17;
 
 import "forge-std/Test.sol";
 import {Artwork} from "../src/Artwork.sol";
-import {Configurator} from "../src/Configurator.sol";
+import {Configurator, Action} from "../src/Configurator.sol";
 import {ConstantFeeFormula} from "../src/fees/ConstantFeeFormula.sol";
 import {ForbiddenToCopy, ForbiddenToBurn} from "../src/interfaces/Errors.sol";
-import {Action} from "../src/interfaces/Structs.sol";
 import {IERC20} from "../src/interfaces/IERC20.sol";
 import {IFeeFormula} from "../src/interfaces/IFeeFormula.sol";
 import {ERC20} from "../src/libraries/ERC20.sol";

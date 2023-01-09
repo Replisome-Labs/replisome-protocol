@@ -1,13 +1,12 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.17;
 
-import {IConfigurator} from "./IConfigurator.sol";
+import {IConfigurator, Action} from "./IConfigurator.sol";
 import {ICopyright} from "./ICopyright.sol";
 import {IERC1155} from "./IERC1155.sol";
 import {IERC1155MetadataURI} from "./IERC1155MetadataURI.sol";
 import {IERC2981} from "./IERC2981.sol";
 import {IERC20} from "./IERC20.sol";
-import {Action} from "./Structs.sol";
 
 interface IArtwork is IERC1155, IERC1155MetadataURI, IERC2981 {
     event RoyaltyTransfer(

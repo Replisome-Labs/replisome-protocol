@@ -1,8 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.17;
 
-import {Property} from "../interfaces/Structs.sol";
-import {ICopyright} from "../interfaces/ICopyright.sol";
+import {ICopyright, Property} from "../interfaces/ICopyright.sol";
 import {INFTRenderer} from "../interfaces/INFTRenderer.sol";
 import {IMetadata} from "../interfaces/IMetadata.sol";
 import {Base64} from "../libraries/Base64.sol";

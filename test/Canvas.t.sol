@@ -7,11 +7,11 @@ import {Configurator} from "../src/Configurator.sol";
 import {MetadataRegistry} from "../src/MetadataRegistry.sol";
 import {Copyright} from "../src/Copyright.sol";
 import {Artwork} from "../src/Artwork.sol";
-import {RasterMetadata} from "../src/RasterMetadata.sol";
+import {RasterMetadata, Layer} from "../src/RasterMetadata.sol";
+import {Rotate, Flip} from "../src/utils/RasterEngine.sol";
 import {CC0Ruleset} from "../src/rulesets/CC0Ruleset.sol";
 import {ERC1155Receiver} from "../src/libraries/ERC1155Receiver.sol";
 import {ERC721Receiver} from "../src/libraries/ERC721Receiver.sol";
-import {Layer, Rotate, Flip} from "../src/interfaces/Structs.sol";
 
 contract CanvasTest is Test, ERC1155Receiver, ERC721Receiver {
     using stdStorage for StdStorage;

@@ -2,8 +2,8 @@
 pragma solidity ^0.8.17;
 
 import "forge-std/Test.sol";
-import {RasterMetadata} from "../src/RasterMetadata.sol";
-import {Property, Layer, Rotate, Flip} from "../src/interfaces/Structs.sol";
+import {RasterMetadata, Layer} from "../src/RasterMetadata.sol";
+import {Rotate, Flip} from "../src/utils/RasterEngine.sol";
 import {IRuleset} from "../src/interfaces/IRuleset.sol";
 import {MockCopyright} from "./mock/MockCopyright.sol";
 import {MockRuleset} from "./mock/MockRuleset.sol";
@@ -45,8 +45,8 @@ contract RasterMetadataTest is Test {
 
         uint256 id = metadata.create(data);
 
-        // emit log_bytes(metadata.generateRawData(id));
-        emit log(metadata.generateHTML(id));
+        emit log_bytes(metadata.generateRawData(id));
+        // emit log(metadata.generateHTML(id));
     }
 
     function testCreateWithLayers() public {

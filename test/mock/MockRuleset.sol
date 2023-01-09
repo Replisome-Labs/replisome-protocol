@@ -2,7 +2,6 @@
 pragma solidity ^0.8.17;
 
 import {IRuleset} from "../../src/interfaces/IRuleset.sol";
-import {Action} from "../../src/interfaces/Structs.sol";
 import {IERC20} from "../../src/interfaces/IERC20.sol";
 import {IERC165} from "../../src/interfaces/IERC165.sol";
 import {ERC165} from "../../src/libraries/ERC165.sol";

@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.17;
 
-import {Action} from "../interfaces/Structs.sol";
 import {IERC165} from "../interfaces/IERC165.sol";
 import {IERC20} from "../interfaces/IERC20.sol";
 import {IRuleset} from "../interfaces/IRuleset.sol";
