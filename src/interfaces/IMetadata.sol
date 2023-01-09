@@ -3,18 +3,14 @@ pragma solidity ^0.8.17;
 
 import {IERC165} from "./IERC165.sol";
 import {ICopyright} from "./ICopyright.sol";
+import {INFTRenderer} from "./INFTRenderer.sol";
 
-interface IMetadata is IERC165 {
+interface IMetadata is IERC165, INFTRenderer {
     event Created(uint256 indexed metadataId, bytes rawData);
 
     function copyright() external view returns (ICopyright target);
 
     function totalSupply() external view returns (uint256 amount);
-
-    function generateHTML(uint256 metadataId)
-        external
-        view
-        returns (string memory html);
 
     function generateRawData(uint256 metadataId)
         external

@@ -10,6 +10,8 @@ import {Strings} from "../../src/libraries/Strings.sol";
 contract MockMetadata is IMetadata, ERC165 {
     using Strings for uint256;
 
+    string public constant MIMEType = "text/html";
+
     ICopyright public copyright;
 
     uint256 public totalSupply;
@@ -17,7 +19,7 @@ contract MockMetadata is IMetadata, ERC165 {
     mapping(bytes => uint256) public dataToId;
     mapping(uint256 => bytes) public idToData;
 
-    function generateHTML(uint256 metadataId)
+    function generateFile(uint256 metadataId)
         external
         pure
         returns (string memory svg)

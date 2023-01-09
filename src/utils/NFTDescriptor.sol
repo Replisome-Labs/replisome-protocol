@@ -13,40 +13,47 @@ library NFTDescriptor {
     }
 
     /**
-     * @notice Construct an ERC721 token URI.
+     * @notice Construct an token URI.
      */
     function constructTokenURI(TokenURIParams memory params)
         public
         view
         returns (string memory)
     {
-        string memory image = generateImage(params.renderer, params.id);
-
-        // prettier-ignore
-        return string(
-            abi.encodePacked(
-                'data:application/json;base64,',
+        return
+            string.concat(
+                "data:application/json;base64,",
                 Base64.encode(
-                    bytes(
-                        abi.encodePacked('{"name":"', params.name, '", "description":"', params.description, '", "image": "', 'data:text/html;base64,', image, '"}')
+                    abi.encodePacked(
+                        '{"name":"',
+                        params.name,
+                        '", "description":"',
+                        params.description,
+                        '", "image": "',
+                        generateImage(params.renderer, params.id),
+                        '"}'
                     )
                 )
-            )
-        );
+            );
     }
 
     /**
-     * @notice Generate an SVG image for use in the NFT URI.
+     * @notice Generate an image for use in the NFT URI.
      */
     function generateImage(INFTRenderer renderer, uint256 id)
         public
         view
-        returns (string memory html)
+        returns (string memory image)
     {
         if (address(renderer) == address(0)) {
-            html = "";
+            image = "";
         } else {
-            html = Base64.encode(bytes(renderer.generateHTML(id)));
+            image = string.concat(
+                "data:",
+                renderer.MIMEType(),
+                ";base64,",
+                Base64.encode(bytes(renderer.generateFile(id)))
+            );
         }
     }
 }

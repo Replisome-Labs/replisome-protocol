@@ -6,7 +6,6 @@ import {ICopyright} from "./interfaces/ICopyright.sol";
 import {IMetadata} from "./interfaces/IMetadata.sol";
 import {IERC165} from "./interfaces/IERC165.sol";
 import {ERC165} from "./libraries/ERC165.sol";
-import {SafeCast} from "./libraries/SafeCast.sol";
 import {SSTORE2} from "./libraries/SSTORE2.sol";
 import {RasterEngine, Rotate, Flip, Palette, Frame} from "./utils/RasterEngine.sol";
 import {RasterRenderer} from "./utils/RasterRenderer.sol";
@@ -31,6 +30,8 @@ struct Layer {
 contract RasterMetadata is IMetadata, ERC165 {
     using RasterEngine for Palette;
     using RasterEngine for Frame;
+
+    string public constant MIMEType = RasterRenderer.MIMEType;
 
     ICopyright public immutable copyright;
 
@@ -69,10 +70,10 @@ contract RasterMetadata is IMetadata, ERC165 {
         ok = address(metadata) == address(this);
     }
 
-    function generateHTML(uint256 metadataId)
+    function generateFile(uint256 metadataId)
         external
         view
-        returns (string memory html)
+        returns (string memory file)
     {
         Meta storage meta = _metaOf[metadataId];
         RasterRenderer.Params memory params = RasterRenderer.Params({
@@ -83,7 +84,7 @@ contract RasterMetadata is IMetadata, ERC165 {
             colors: meta.palette.getColors(),
             data: SSTORE2.read(meta.dataPointer)
         });
-        html = RasterRenderer.generateHTML(params);
+        file = RasterRenderer.generateFile(params);
     }
 
     function generateRawData(uint256 metadataId)

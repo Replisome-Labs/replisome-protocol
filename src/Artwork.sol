@@ -91,7 +91,7 @@ contract Artwork is IArtwork, ERC1155 {
                 NFTDescriptor.TokenURIParams({
                     name: name,
                     description: description,
-                    renderer: INFTRenderer(address(metadata)),
+                    renderer: metadata,
                     id: metadataId
                 })
             );

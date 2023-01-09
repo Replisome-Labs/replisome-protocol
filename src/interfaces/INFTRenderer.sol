@@ -2,8 +2,10 @@
 pragma solidity ^0.8.17;
 
 interface INFTRenderer {
-    function generateHTML(uint256 id)
+    function MIMEType() external view returns (string memory mimeType);
+
+    function generateFile(uint256 id)
         external
         view
-        returns (string memory html);
+        returns (string memory file);
 }
