@@ -33,10 +33,17 @@ lint:; solhint src/**/*.sol && solhint src/*.sol
 anvil:; anvil -m 'test test test test test test test test test test test junk'
 
 # use the "@" to hide the command from your shell 
-deploy-avalanche:; @forge script script/${contract}.s.sol:${contract} --rpc-url ${AVALANCHE_RPC_URL}  --private-key ${PRIVATE_KEY} --broadcast -vvvv
+deploy-avalanche:; 
+	@for file in ./script/*; do \
+		if test -f "$${file}"; then \
+			contract=$$(echo "$${file}" | sed 's/.*_\(.*\)\.s\.sol/\1/'); \
+			forge script $${file}:$${contract} --rpc-url ${AVALANCHE_RPC_URL}  --private-key ${PRIVATE_KEY} --broadcast -vvvv; \
+			sleep 5; \
+		fi \
+	done
 
 # use the "@" to hide the command from your shell 
-deploy-fuji:
+deploy-fuji:;
 	@for file in ./script/*; do \
 		if test -f "$${file}"; then \
 			contract=$$(echo "$${file}" | sed 's/.*_\(.*\)\.s\.sol/\1/'); \
