@@ -2,9 +2,10 @@
 pragma solidity ^0.8.17;
 
 import {IArtwork} from "./interfaces/IArtwork.sol";
-import {ICanvas} from "./interfaces/ICanvas.sol";
+import {ICanvasV1} from "./interfaces/ICanvasV1.sol";
 import {IConfigurator, Action} from "./interfaces/IConfigurator.sol";
 import {ICopyright} from "./interfaces/ICopyright.sol";
+import {IRulesetFactory} from "./interfaces/IRulesetFactory.sol";
 import {IERC165} from "./interfaces/IERC165.sol";
 import {IERC20} from "./interfaces/IERC20.sol";
 import {IMetadata} from "./interfaces/IMetadata.sol";
@@ -14,7 +15,7 @@ import {ERC721Receiver} from "./libraries/ERC721Receiver.sol";
 import {ERC1155Receiver} from "./libraries/ERC1155Receiver.sol";
 import {SafeERC20} from "./libraries/SafeERC20.sol";
 
-contract Canvas is ICanvas, ERC165, ERC721Receiver, ERC1155Receiver {
+contract Canvas is ICanvasV1, ERC165, ERC721Receiver, ERC1155Receiver {
     using SafeERC20 for IERC20;
 
     IConfigurator public immutable configurator;
@@ -39,16 +40,38 @@ contract Canvas is ICanvas, ERC165, ERC721Receiver, ERC1155Receiver {
         returns (bool)
     {
         return
-            interfaceId == type(ICanvas).interfaceId ||
+            interfaceId == type(ICanvasV1).interfaceId ||
             super.supportsInterface(interfaceId);
     }
 
-    function create(
+    function createArtwork(
         uint256 amount,
         IRuleset ruleset,
         IMetadata metadata,
         bytes calldata data
     ) external returns (uint256 tokenId) {
+        uint256 metadataId = metadata.create(data);
+
+        _payCopyrightFee(metadata, metadataId, Action.CopyrightClaim);
+
+        copyright.claim(msg.sender, ruleset, metadata, metadataId);
+        tokenId = copyright.search(metadata, metadataId);
+
+        if (amount > 0) {
+            _payArtworkFee(tokenId, amount, Action.ArtworkCopy);
+
+            artwork.copy(msg.sender, tokenId, amount);
+        }
+    }
+
+    function createRulesetAndArtwork(
+        uint256 amount,
+        IRulesetFactory rulesetFactory,
+        IMetadata metadata,
+        bytes calldata rulesetData,
+        bytes calldata data
+    ) external returns (uint256 tokenId) {
+        IRuleset ruleset = rulesetFactory.create(rulesetData);
         uint256 metadataId = metadata.create(data);
 
         _payCopyrightFee(metadata, metadataId, Action.CopyrightClaim);
