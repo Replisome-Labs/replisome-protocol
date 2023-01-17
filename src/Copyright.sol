@@ -281,20 +281,4 @@ contract Copyright is ICopyright, ERC721("Replisome Copyright", "RPS-CR") {
             token.safeTransferFrom(msg.sender, treasury, fee);
         }
     }
-
-    function _payFee(
-        IERC20 token,
-        address from,
-        address to,
-        uint256 amount
-    ) internal {
-        if (
-            address(token) != address(0) &&
-            from != address(0) &&
-            to != address(0) &&
-            amount != uint256(0)
-        ) {
-            token.safeTransferFrom(from, to, amount);
-        }
-    }
 }
