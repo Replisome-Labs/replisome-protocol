@@ -11,7 +11,7 @@ import {Owned} from "./libraries/Owned.sol";
 contract Configurator is Owned(msg.sender), IConfigurator {
     INFTRenderer public copyrightRenderer;
 
-    address public treatury;
+    address public treasury;
 
     IERC20 public feeToken;
 
@@ -39,9 +39,9 @@ contract Configurator is Owned(msg.sender), IConfigurator {
         emit FeeUpdated(action, feeFormula);
     }
 
-    function setTreatury(address vault) external onlyOwner {
-        treatury = vault;
-        emit TreaturyUpdated(vault);
+    function setTreasury(address vault) external onlyOwner {
+        treasury = vault;
+        emit TreasuryUpdated(vault);
     }
 
     function setFeeToken(IERC20 token) external onlyOwner {

@@ -269,7 +269,7 @@ contract Copyright is ICopyright, ERC721("Replisome Copyright", "RPS-CR") {
 
     function _payProtocolFee(uint256 tokenId, Action action) internal {
         IERC20 token = configurator.feeToken();
-        address treasury = configurator.treatury();
+        address treasury = configurator.treasury();
         if (address(token) != address(0) && treasury != address(0)) {
             Property storage property = _propertyOf[tokenId];
             uint256 fee = configurator.getFeeAmount(

@@ -139,7 +139,7 @@ contract RasterMetadata is IMetadata, ERC165 {
     }
 
     /**
-     * @dev data is encoded by (uint256, uint256, Layer[], bytes4[], bytes)
+     * @dev data is encoded with (uint256 width, uint256 height, Layer[] layers, bytes4[] colors, bytes drawing)
      */
     function verify(bytes calldata data) external returns (uint256 metadataId) {
         (
@@ -165,7 +165,7 @@ contract RasterMetadata is IMetadata, ERC165 {
     }
 
     /**
-     * @dev data is encoded by (uint256 width, uint256 height, Layer[] layers, bytes4[] colors, bytes drawing)
+     * @dev data is encoded with (uint256 width, uint256 height, Layer[] layers, bytes4[] colors, bytes drawing)
      */
     function create(bytes calldata data) external returns (uint256 metadataId) {
         (

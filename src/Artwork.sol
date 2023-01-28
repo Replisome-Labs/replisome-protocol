@@ -430,7 +430,7 @@ contract Artwork is IArtwork, ERC1155 {
         Action action
     ) internal {
         IERC20 token = configurator.feeToken();
-        address treasury = configurator.treatury();
+        address treasury = configurator.treasury();
         if (address(token) != address(0) && treasury != address(0)) {
             (IMetadata metadata, uint256 metadataId) = copyright.metadataOf(
                 tokenId

@@ -4,7 +4,7 @@ pragma solidity ^0.8.17;
 import "forge-std/Script.sol";
 import {IConfigurator} from "../src/interfaces/IConfigurator.sol";
 
-contract SetTreatury is Script {
+contract SetTreasury is Script {
     using stdJson for string;
 
     function run() public {
@@ -18,7 +18,7 @@ contract SetTreatury is Script {
             "/addresses.json"
         );
         json = vm.readFile(path);
-        address treaturyAddress = json.readAddress("Treatury");
+        address treasuryAddress = json.readAddress("Treasury");
 
         path = string.concat(
             vm.projectRoot(),
@@ -33,7 +33,7 @@ contract SetTreatury is Script {
 
         vm.startBroadcast();
 
-        configurator.setTreatury(treaturyAddress);
+        configurator.setTreasury(treasuryAddress);
 
         vm.stopBroadcast();
     }

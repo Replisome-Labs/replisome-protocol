@@ -8,7 +8,7 @@ import {IERC20} from "../src/interfaces/IERC20.sol";
 import {INFTRenderer} from "../src/interfaces/INFTRenderer.sol";
 
 contract ConfiguratorTest is Test {
-    event TreaturyUpdated(address indexed vault);
+    event TreasuryUpdated(address indexed vault);
 
     event FeeTokenUpdated(IERC20 indexed token);
 
@@ -17,7 +17,7 @@ contract ConfiguratorTest is Test {
     Configurator public configurator;
 
     address public constant prankAddress = address(0);
-    address public constant treatury = address(100);
+    address public constant treasury = address(100);
     IERC20 public constant feeToken = IERC20(address(200));
     uint256 public constant copyrightClaimFee = uint256(300);
     uint256 public constant copyrightWaiveFee = uint256(400);
@@ -29,19 +29,19 @@ contract ConfiguratorTest is Test {
         configurator = new Configurator();
     }
 
-    function testSetTreatury() public {
+    function testSetTreasury() public {
         vm.expectEmit(true, false, false, false);
-        emit TreaturyUpdated(treatury);
-        configurator.setTreatury(treatury);
-        assertEq(configurator.treatury(), treatury);
+        emit TreasuryUpdated(treasury);
+        configurator.setTreasury(treasury);
+        assertEq(configurator.treasury(), treasury);
     }
 
-    function testSetTreaturyAsNotOwner() public {
+    function testSetTreasuryAsNotOwner() public {
         vm.expectRevert(
             abi.encodeWithSelector(Unauthorized.selector, prankAddress)
         );
         vm.startPrank(prankAddress);
-        configurator.setTreatury(treatury);
+        configurator.setTreasury(treasury);
         vm.stopPrank();
     }
 

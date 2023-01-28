@@ -30,7 +30,7 @@ contract ArtworkTest is Test, ERC1155Receiver {
     MockRuleset public mockRuleset;
 
     address public constant prankAddress = address(0);
-    address public constant treatury = address(100);
+    address public constant treasury = address(100);
     ERC20 public feeToken;
     IFeeFormula public feeFormula;
     ERC20 public royaltyToken;
@@ -61,8 +61,8 @@ contract ArtworkTest is Test, ERC1155Receiver {
 
         stdstore
             .target(address(configurator))
-            .sig(configurator.treatury.selector)
-            .checked_write(treatury);
+            .sig(configurator.treasury.selector)
+            .checked_write(treasury);
 
         stdstore
             .target(address(configurator))
