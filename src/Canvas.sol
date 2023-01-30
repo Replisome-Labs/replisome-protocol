@@ -86,32 +86,6 @@ contract Canvas is ICanvasV1, ERC165, ERC721Receiver, ERC1155Receiver {
         }
     }
 
-    function waive(uint256 tokenId) external {
-        (IMetadata metadata, uint256 metadataId) = copyright.metadataOf(
-            tokenId
-        );
-
-        _payCopyrightFee(metadata, metadataId, Action.CopyrightWaive);
-
-        copyright.waive(tokenId);
-    }
-
-    function copy(uint256 tokenId, uint256 amount) external {
-        if (amount > 0) {
-            _payArtworkFee(tokenId, amount, Action.ArtworkCopy);
-
-            artwork.copy(msg.sender, tokenId, amount);
-        }
-    }
-
-    function burn(uint256 tokenId, uint256 amount) external {
-        if (amount > 0) {
-            _payArtworkFee(tokenId, amount, Action.ArtworkBurn);
-
-            artwork.burn(msg.sender, tokenId, amount);
-        }
-    }
-
     // this function should only dry run
     function appraise(
         uint256 amount,

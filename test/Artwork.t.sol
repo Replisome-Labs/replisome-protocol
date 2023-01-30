@@ -80,6 +80,12 @@ contract ArtworkTest is Test, ERC1155Receiver {
             .sig(configurator.fees.selector)
             .with_key(uint256(Action.ArtworkBurn))
             .checked_write(address(feeFormula));
+
+        stdstore
+            .target(address(mockCopyright))
+            .sig(mockCopyright.testOwnerOf.selector)
+            .with_key(1)
+            .checked_write(address(this));
     }
 
     function testCopy() public {

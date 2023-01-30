@@ -280,12 +280,14 @@ contract Artwork is IArtwork, ERC1155 {
             canCopy[account][tokenId] = allowed - amount;
         }
 
+        if (copyright.ownerOf(tokenId) != account) {
+            _payCopyRoyalty(tokenId, amount);
+        }
+        _payProtocolFee(tokenId, amount, Action.ArtworkCopy);
+
         ownedBalanceOf[account][tokenId] += amount;
         _consume(account, tokenId, amount);
         _mint(account, tokenId, amount, "");
-
-        _payProtocolFee(tokenId, amount, Action.ArtworkCopy);
-        _payCopyRoyalty(tokenId, amount);
     }
 
     function burn(
@@ -308,12 +310,14 @@ contract Artwork is IArtwork, ERC1155 {
             canBurn[account][tokenId] = allowed - amount;
         }
 
-        ownedBalanceOf[account][tokenId] -= amount;
-        _recycle(account, tokenId, amount);
-        _burn(account, tokenId, amount);
-
+        if (copyright.ownerOf(tokenId) != account) {
+            _payBurnRoyalty(tokenId, amount);
+        }
         _payProtocolFee(tokenId, amount, Action.ArtworkBurn);
-        _payBurnRoyalty(tokenId, amount);
+
+        ownedBalanceOf[account][tokenId] -= amount;
+        _burn(account, tokenId, amount);
+        _recycle(account, tokenId, amount);
     }
 
     function _consume(
@@ -336,7 +340,9 @@ contract Artwork is IArtwork, ERC1155 {
                 usedAmounts[i] = ingredientAmounts[i] * amount;
                 balanceOf[account][ingredientId] -= usedAmounts[i];
 
-                _payUtilizeRoyalty(ingredientId, usedAmounts[i]);
+                if (copyright.ownerOf(ingredientId) != account) {
+                    _payUtilizeRoyalty(ingredientId, usedAmounts[i]);
+                }
 
                 unchecked {
                     ++i;

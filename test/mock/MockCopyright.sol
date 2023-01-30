@@ -10,7 +10,9 @@ import {IRuleset} from "../../src/interfaces/IRuleset.sol";
 import {IERC165} from "../../src/interfaces/IERC165.sol";
 import {IERC2981} from "../../src/interfaces/IERC2981.sol";
 import {IERC20} from "../../src/interfaces/IERC20.sol";
+import {IERC721} from "../../src/interfaces/IERC721.sol";
 import {IERC721Metadata} from "../../src/interfaces/IERC721Metadata.sol";
+import {NotMinted} from "../../src/interfaces/Errors.sol";
 import {ERC721} from "../../src/libraries/ERC721.sol";
 
 contract MockCopyright is ICopyright, ERC721("Replisome Copyright", "RPS-CR") {
@@ -24,6 +26,20 @@ contract MockCopyright is ICopyright, ERC721("Replisome Copyright", "RPS-CR") {
     IArtwork public artwork;
 
     uint256 public totalSupply;
+
+    mapping(uint256 => address) public testOwnerOf;
+
+    function ownerOf(uint256 id)
+        public
+        view
+        override(ERC721, IERC721)
+        returns (address owner)
+    {
+        owner = testOwnerOf[id];
+        if (owner == address(0)) {
+            revert NotMinted(id);
+        }
+    }
 
     mapping(uint256 => IMetadata) public _metadataContractOf;
 
