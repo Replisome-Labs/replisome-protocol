@@ -206,7 +206,10 @@ contract Artwork is IArtwork, ERC1155 {
 
         IRuleset ruleset = copyright.rulesetOf(tokenId);
         if (address(ruleset) != address(0)) {
-            allowance = Math.min(allowance, ruleset.canTransfer(account));
+            allowance = Math.min(
+                allowance,
+                ruleset.canTransfer(account, tokenId)
+            );
         }
 
         canTransfer[account][tokenId] = allowance;
@@ -230,7 +233,7 @@ contract Artwork is IArtwork, ERC1155 {
 
         IRuleset ruleset = copyright.rulesetOf(tokenId);
         if (address(ruleset) != address(0)) {
-            allowance = Math.min(allowance, ruleset.canCopy(account));
+            allowance = Math.min(allowance, ruleset.canCopy(account, tokenId));
         }
 
         canCopy[account][tokenId] = allowance;
@@ -254,7 +257,7 @@ contract Artwork is IArtwork, ERC1155 {
 
         IRuleset ruleset = copyright.rulesetOf(tokenId);
         if (address(ruleset) != address(0)) {
-            allowance = Math.min(allowance, ruleset.canBurn(account));
+            allowance = Math.min(allowance, ruleset.canBurn(account, tokenId));
         }
 
         canBurn[account][tokenId] = allowance;

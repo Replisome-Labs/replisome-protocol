@@ -13,7 +13,7 @@ interface IRuleset is IERC165 {
     /**
      * @dev Returns the amount of artwork that can be transfered by the `actor`
      */
-    function canTransfer(address actor)
+    function canTransfer(address actor, uint256 tokenId)
         external
         view
         returns (uint256 allowance);
@@ -21,20 +21,27 @@ interface IRuleset is IERC165 {
     /**
      * @dev Returns the amount of artwork that can be reproducied by the `actor`
      */
-    function canCopy(address actor) external view returns (uint256 allowance);
+    function canCopy(address actor, uint256 tokenId)
+        external
+        view
+        returns (uint256 allowance);
 
     /**
      * @dev Returns the amount of artwork that can be burn by the `actor`
      */
-    function canBurn(address actor) external view returns (uint256 allowance);
+    function canBurn(address actor, uint256 tokenId)
+        external
+        view
+        returns (uint256 allowance);
 
     /**
      * @dev Returns the amount of artwork that can be applied by the `actor`
      */
-    function canApply(address actor, IRuleset ruleset)
-        external
-        view
-        returns (uint256 allownace);
+    function canApply(
+        address actor,
+        uint256 tokenId,
+        IRuleset ruleset
+    ) external view returns (uint256 allownace);
 
     /**
      * @dev Returns the `receiver` and the `royaltyAmount` depended on the `salePrice`

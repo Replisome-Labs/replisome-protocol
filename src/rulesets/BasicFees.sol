@@ -49,23 +49,35 @@ contract BasicFees is IRuleset, ERC165 {
         ok = _isUpgradable;
     }
 
-    function canTransfer(address) external pure returns (uint256 allowance) {
-        allowance = type(uint256).max;
-    }
-
-    function canCopy(address) external pure returns (uint256 allowance) {
-        allowance = type(uint256).max;
-    }
-
-    function canBurn(address) external pure returns (uint256 allowance) {
-        allowance = type(uint256).max;
-    }
-
-    function canApply(address, IRuleset)
+    function canTransfer(address, uint256)
         external
         pure
         returns (uint256 allowance)
     {
+        allowance = type(uint256).max;
+    }
+
+    function canCopy(address, uint256)
+        external
+        pure
+        returns (uint256 allowance)
+    {
+        allowance = type(uint256).max;
+    }
+
+    function canBurn(address, uint256)
+        external
+        pure
+        returns (uint256 allowance)
+    {
+        allowance = type(uint256).max;
+    }
+
+    function canApply(
+        address,
+        uint256,
+        IRuleset
+    ) external pure returns (uint256 allowance) {
         allowance = type(uint256).max;
     }
 

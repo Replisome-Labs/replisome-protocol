@@ -93,6 +93,7 @@ contract ArtworkTest is Test, ERC1155Receiver {
             .target(address(mockRuleset))
             .sig(mockRuleset.canCopy.selector)
             .with_key(address(this))
+            .with_key(1)
             .checked_write(type(uint256).max);
 
         stdstore
@@ -114,6 +115,7 @@ contract ArtworkTest is Test, ERC1155Receiver {
             .target(address(mockRuleset))
             .sig(mockRuleset.canCopy.selector)
             .with_key(address(this))
+            .with_key(1)
             .checked_write(type(uint256).min);
 
         stdstore
@@ -136,6 +138,7 @@ contract ArtworkTest is Test, ERC1155Receiver {
             .target(address(mockRuleset))
             .sig(mockRuleset.canBurn.selector)
             .with_key(address(this))
+            .with_key(1)
             .checked_write(type(uint256).max);
 
         stdstore
@@ -171,6 +174,7 @@ contract ArtworkTest is Test, ERC1155Receiver {
             .target(address(mockRuleset))
             .sig(mockRuleset.canBurn.selector)
             .with_key(address(this))
+            .with_key(1)
             .checked_write(type(uint256).min);
 
         stdstore

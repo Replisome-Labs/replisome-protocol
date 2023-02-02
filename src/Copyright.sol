@@ -194,14 +194,17 @@ contract Copyright is ICopyright, ERC721("Replisome Copyright", "RPS-CR") {
             uint256[] memory ingredientIds,
             uint256[] memory ingredientAmounts
         ) = metadata.getIngredients(metadataId);
-        IRuleset ingredientRuleset;
+        uint256 ingredientId;
         for (uint256 i = 0; i < ingredientIds.length; ) {
-            ingredientRuleset = _propertyOf[ingredientIds[i]].ruleset;
+            ingredientId = ingredientIds[i];
             if (
-                ingredientRuleset.canApply(creator, ruleset) <
-                ingredientAmounts[i]
+                _propertyOf[ingredientId].ruleset.canApply(
+                    creator,
+                    ingredientId,
+                    ruleset
+                ) < ingredientAmounts[i]
             ) {
-                revert ForbiddenToApply(ingredientIds[i]);
+                revert ForbiddenToApply(ingredientId);
             }
             unchecked {
                 ++i;

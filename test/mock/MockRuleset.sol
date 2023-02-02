@@ -9,13 +9,14 @@ import {ERC165} from "../../src/libraries/ERC165.sol";
 contract MockRuleset is IRuleset, ERC165 {
     bool public isUpgradable = true;
 
-    mapping(address => uint256) public canTransfer;
+    mapping(address => mapping(uint256 => uint256)) public canTransfer;
 
-    mapping(address => uint256) public canCopy;
+    mapping(address => mapping(uint256 => uint256)) public canCopy;
 
-    mapping(address => uint256) public canBurn;
+    mapping(address => mapping(uint256 => uint256)) public canBurn;
 
-    mapping(address => mapping(IRuleset => uint256)) public canApply;
+    mapping(address => mapping(uint256 => mapping(IRuleset => uint256)))
+        public canApply;
 
     address public saleRoyaltyReceiver;
     uint256 public saleRoyaltyAmount;
