@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.17;
 
-import {Unauthorized, AlreadyMinted, NotMinted, InvalidMetadata, InexistenceMetadata, InvalidRuleset, NotUpgradableRuleset, ForbiddenToApply} from "./interfaces/Errors.sol";
+import {ProtocolPaused, Unauthorized, AlreadyMinted, NotMinted, InvalidMetadata, InexistenceMetadata, InvalidRuleset, NotUpgradableRuleset, ForbiddenToApply} from "./interfaces/Errors.sol";
 import {ICopyright, Property} from "./interfaces/ICopyright.sol";
 import {IConfigurator, Action} from "./interfaces/IConfigurator.sol";
 import {IMetadataRegistry} from "./interfaces/IMetadataRegistry.sol";
@@ -174,6 +174,10 @@ contract Copyright is ICopyright, ERC721("Replisome Copyright", "RPS-CR") {
         IMetadata metadata,
         uint256 metadataId
     ) external {
+        if (configurator.paused()) {
+            revert ProtocolPaused();
+        }
+
         if (
             address(ruleset) == address(0) ||
             !address(ruleset).supportsInterface(type(IRuleset).interfaceId)

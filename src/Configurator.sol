@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.17;
 
+import {AlreadyPaused, YetPaused} from "./interfaces/Errors.sol";
 import {IConfigurator, Action} from "./interfaces/IConfigurator.sol";
 import {IERC20} from "./interfaces/IERC20.sol";
 import {INFTRenderer} from "./interfaces/INFTRenderer.sol";
@@ -9,6 +10,8 @@ import {IMetadata} from "./interfaces/IMetadata.sol";
 import {Owned} from "./libraries/Owned.sol";
 
 contract Configurator is Owned(msg.sender), IConfigurator {
+    bool public paused;
+
     INFTRenderer public copyrightRenderer;
 
     address public treasury;
@@ -52,5 +55,21 @@ contract Configurator is Owned(msg.sender), IConfigurator {
     function setCopyrightRenderer(INFTRenderer renderer) external onlyOwner {
         copyrightRenderer = renderer;
         emit CopyrightRendererUpdated(renderer);
+    }
+
+    function pause() external onlyOwner {
+        if (paused == true) {
+            revert AlreadyPaused();
+        }
+        paused = true;
+        emit Paused();
+    }
+
+    function unpause() external onlyOwner {
+        if (paused == false) {
+            revert YetPaused();
+        }
+        paused = false;
+        emit Unpaused();
     }
 }

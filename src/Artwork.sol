@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.17;
 
-import {Unauthorized, ForbiddenToTransfer, ForbiddenToCopy, ForbiddenToBurn, LengthMismatch, UnsafeRecipient} from "./interfaces/Errors.sol";
+import {ProtocolPaused, Unauthorized, ForbiddenToTransfer, ForbiddenToCopy, ForbiddenToBurn, LengthMismatch, UnsafeRecipient} from "./interfaces/Errors.sol";
 import {IArtwork} from "./interfaces/IArtwork.sol";
 import {IConfigurator, Action} from "./interfaces/IConfigurator.sol";
 import {ICopyright} from "./interfaces/ICopyright.sol";
@@ -268,6 +268,10 @@ contract Artwork is IArtwork, ERC1155 {
         uint256 tokenId,
         uint256 amount
     ) external {
+        if (configurator.paused()) {
+            revert ProtocolPaused();
+        }
+
         if (msg.sender != account && !isApprovedForAll[account][msg.sender]) {
             revert Unauthorized(msg.sender);
         }

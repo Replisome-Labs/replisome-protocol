@@ -8,11 +8,17 @@ import {IERC20} from "../src/interfaces/IERC20.sol";
 import {INFTRenderer} from "../src/interfaces/INFTRenderer.sol";
 
 contract ConfiguratorTest is Test {
+    using stdStorage for StdStorage;
+
     event TreasuryUpdated(address indexed vault);
 
     event FeeTokenUpdated(IERC20 indexed token);
 
     event CopyrightRendererUpdated(INFTRenderer indexed renderer);
+
+    event Paused();
+
+    event Unpaused();
 
     Configurator public configurator;
 
@@ -78,5 +84,21 @@ contract ConfiguratorTest is Test {
         vm.startPrank(prankAddress);
         configurator.setCopyrightRenderer(copyrightRenderer);
         vm.stopPrank();
+    }
+
+    function testPause() public {
+        vm.expectEmit(false, false, false, false);
+        emit Paused();
+        configurator.pause();
+        assertEq(configurator.paused(), true);
+    }
+
+    function testUnpause() public {
+        configurator.pause();
+
+        vm.expectEmit(false, false, false, false);
+        emit Unpaused();
+        configurator.unpause();
+        assertEq(configurator.paused(), false);
     }
 }

@@ -37,6 +37,16 @@ interface IConfigurator {
     event CopyrightRendererUpdated(INFTRenderer indexed renderer);
 
     /**
+     * @dev Emits when the pause is trigger
+     */
+    event Paused();
+
+    /**
+     * @dev Emits when the pause is lifted
+     */
+    event Unpaused();
+
+    /**
      * @dev Returns treasury address
      */
     function treasury() external view returns (address vault);
@@ -84,4 +94,19 @@ interface IConfigurator {
      * Emits a {CopyrightRendererUpdated} event
      */
     function setCopyrightRenderer(INFTRenderer renderer) external;
+
+    /**
+     * @dev Returns true if the contract is paused, and false otherwise.
+     */
+    function paused() external view returns (bool);
+
+    /**
+     * @dev pause the execution of copyright claim and artwork copy.
+     */
+    function pause() external;
+
+    /**
+     * @dev unpause the execution of copyright claim and artwork copy.
+     */
+    function unpause() external;
 }

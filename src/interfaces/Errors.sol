@@ -19,6 +19,12 @@ error Reentrancy(); // ab143c06
 
 error Unauthorized(address account); // 8e4a23d6
 
+error AlreadyPaused(); // 1785c681
+
+error YetPaused(); // 6b7f932d
+
+error ProtocolPaused(); // 44279255
+
 // Token
 
 error AlreadyMinted(uint256 tokenId); // a593dbf8
