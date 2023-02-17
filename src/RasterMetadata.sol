@@ -138,6 +138,14 @@ contract RasterMetadata is IMetadata, ERC165 {
         }
     }
 
+    function getIngredientAmount(uint256 metadataId, uint256 tokenId)
+        external
+        view
+        returns (uint256 amount)
+    {
+        amount = _metaOf[metadataId].ingredientAmountOf[tokenId];
+    }
+
     /**
      * @dev data is encoded with (uint256 width, uint256 height, Layer[] layers, bytes4[] colors, bytes drawing)
      */

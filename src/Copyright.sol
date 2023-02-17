@@ -156,6 +156,21 @@ contract Copyright is ICopyright, ERC721("Replisome Copyright", "RPS-CR") {
         (ids, amounts) = property.metadata.getIngredients(property.metadataId);
     }
 
+    function getIngredientAmount(uint256 tokenId, uint256 ingredientId)
+        external
+        view
+        returns (uint256 amount)
+    {
+        if (!exists(tokenId)) {
+            revert NotMinted(tokenId);
+        }
+        Property memory property = _propertyOf[tokenId];
+        amount = property.metadata.getIngredientAmount(
+            property.metadataId,
+            ingredientId
+        );
+    }
+
     function exists(uint256 tokenId) public view returns (bool ok) {
         ok = _ownerOf[tokenId] != address(0);
     }

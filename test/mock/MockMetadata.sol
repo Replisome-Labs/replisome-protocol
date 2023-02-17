@@ -55,7 +55,7 @@ contract MockMetadata is IMetadata, ERC165 {
 
     mapping(uint256 => uint256[]) public getIngredientIds;
 
-    mapping(uint256 => uint256[]) public getIngredientAmounts;
+    mapping(uint256 => mapping(uint256 => uint256)) public getIngredientAmounts;
 
     function getIngredients(uint256 metadataId)
         external
@@ -63,7 +63,17 @@ contract MockMetadata is IMetadata, ERC165 {
         returns (uint256[] memory ids, uint256[] memory amounts)
     {
         ids = getIngredientIds[metadataId];
-        amounts = getIngredientAmounts[metadataId];
+        for (uint256 i = 0; i < ids.length; i++) {
+            amounts[i] = getIngredientAmounts[metadataId][ids[i]];
+        }
+    }
+
+    function getIngredientAmount(uint256 metadataId, uint256 tokenId)
+        external
+        view
+        returns (uint256 amount)
+    {
+        amount = getIngredientAmounts[metadataId][tokenId];
     }
 
     function verify(bytes calldata data)

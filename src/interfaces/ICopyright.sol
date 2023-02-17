@@ -20,17 +20,17 @@ struct Property {
 
 interface ICopyright is IERC721, IERC721Metadata, IERC2981 {
     /**
-     * @dev Emits when the `ruleset` of the `tokenId` token is updated
+     * @dev Emits when the `ruleset` of the `tokenId` token is updated.
      */
     event RulesetUpdated(uint256 indexed tokenId, IRuleset indexed ruleset);
 
     /**
-     * @dev Returns the address of configurator
+     * @dev Returns the address of configurator.
      */
     function configurator() external view returns (IConfigurator target);
 
     /**
-     * @dev Returns the address of metadata registry
+     * @dev Returns the address of metadata registry.
      */
     function metadataRegistry()
         external
@@ -38,7 +38,7 @@ interface ICopyright is IERC721, IERC721Metadata, IERC2981 {
         returns (IMetadataRegistry target);
 
     /**
-     * @dev Returns the address of artwork
+     * @dev Returns the address of artwork.
      */
     function artwork() external view returns (IArtwork target);
 
@@ -48,7 +48,7 @@ interface ICopyright is IERC721, IERC721Metadata, IERC2981 {
     function totalSupply() external view returns (uint256 amount);
 
     /**
-     * @dev Returns the metadata address and the metadata id of the `tokenId` token
+     * @dev Returns the metadata address and the metadata id of the `tokenId` token.
      */
     function metadataOf(uint256 tokenId)
         external
@@ -56,12 +56,12 @@ interface ICopyright is IERC721, IERC721Metadata, IERC2981 {
         returns (IMetadata metadata, uint256 metadataId);
 
     /**
-     * @dev Returns the creator address of the `tokenId` token
+     * @dev Returns the creator address of the `tokenId` token.
      */
     function creatorOf(uint256 tokenId) external view returns (address creator);
 
     /**
-     * @dev Returns the ruleset address of the `tokenId` token
+     * @dev Returns the ruleset address of the `tokenId` token.
      */
     function rulesetOf(uint256 tokenId)
         external
@@ -69,7 +69,7 @@ interface ICopyright is IERC721, IERC721Metadata, IERC2981 {
         returns (IRuleset ruleset);
 
     /**
-     * @dev Returns id and amount of tokens that ara composed into the `tokenId` token
+     * @dev Returns id and amount of tokens that ara composed into the `tokenId` token.
      */
     function getIngredients(uint256 tokenId)
         external
@@ -77,12 +77,20 @@ interface ICopyright is IERC721, IERC721Metadata, IERC2981 {
         returns (uint256[] memory ids, uint256[] memory amounts);
 
     /**
-     * @dev Returns true if the `tokenId` token has an owner
+     * @dev Returns the amount of the `id` token that ara composed into the `tokenId` token.
+     */
+    function getIngredientAmount(uint256 tokenId, uint256 id)
+        external
+        view
+        returns (uint256 amount);
+
+    /**
+     * @dev Returns true if the `tokenId` token has an owner.
      */
     function exists(uint256 tokenId) external view returns (bool ok);
 
     /**
-     * @dev Returns tokenId of the token whose metadata is defined by `metadata` and 'metadataId`
+     * @dev Returns tokenId of the token whose metadata is defined by `metadata` and `metadataId`.
      */
     function search(IMetadata metadata, uint256 metadataId)
         external
@@ -90,8 +98,8 @@ interface ICopyright is IERC721, IERC721Metadata, IERC2981 {
         returns (uint256 tokenId);
 
     /**
-     * @dev mint copyright token
-     * Emits a {Transfer} event
+     * @dev mint copyright token.
+     * Emits a {Transfer} event.
      */
     function claim(
         address creator,
@@ -101,14 +109,14 @@ interface ICopyright is IERC721, IERC721Metadata, IERC2981 {
     ) external;
 
     /**
-     * @dev burn the `tokenId` token
-     * Emits a {Transfer} event
+     * @dev burn the `tokenId` token.
+     * Emits a {Transfer} event.
      */
     function waive(uint256 tokenId) external;
 
     /**
-     * @dev update the `ruleset` address of the `tokenId` token
-     * Emits a {RulesetUpdated} event
+     * @dev update the `ruleset` address of the `tokenId` token.
+     * Emits a {RulesetUpdated} event.
      */
     function updateRuleset(uint256 tokenId, IRuleset ruleset) external;
 }

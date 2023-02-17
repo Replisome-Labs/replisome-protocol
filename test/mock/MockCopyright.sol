@@ -88,6 +88,22 @@ contract MockCopyright is ICopyright, ERC721("Replisome Copyright", "RPS-CR") {
         }
     }
 
+    function getIngredientAmount(uint256 tokenId, uint256 id)
+        external
+        pure
+        returns (uint256 amount)
+    {
+        if (tokenId == 1) {
+            amount = 0;
+        } else {
+            if (id == 1) {
+                amount = 1;
+            } else {
+                amount = 0;
+            }
+        }
+    }
+
     // mapping from tokenId to ok
     mapping(uint256 => bool) public exists;
 

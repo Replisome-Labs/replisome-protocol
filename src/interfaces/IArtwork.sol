@@ -22,17 +22,17 @@ interface IArtwork is IERC1155, IERC1155MetadataURI, IERC2981 {
     event Unutilized(address indexed account, uint256[] ids, uint256[] values);
 
     /**
-     * @dev Returns the address of configurator
+     * @dev Returns the address of configurator.
      */
     function configurator() external view returns (IConfigurator target);
 
     /**
-     * @dev Returns the address of copyright
+     * @dev Returns the address of copyright.
      */
     function copyright() external view returns (ICopyright target);
 
     /**
-     * @dev Returns the amount of tokens of token type `id` owned by `account`
+     * @dev Returns the amount of tokens of token type `id` owned by `account`.
      */
     function ownedBalanceOf(address account, uint256 tokenId)
         external
@@ -40,7 +40,7 @@ interface IArtwork is IERC1155, IERC1155MetadataURI, IERC2981 {
         returns (uint256 amount);
 
     /**
-     * @dev Returns the amount of tokens of token type `id` used by `account`
+     * @dev Returns the amount of tokens of token type `id` used by `account`.
      */
     function usedBalanceOf(address account, uint256 tokenId)
         external
@@ -48,7 +48,7 @@ interface IArtwork is IERC1155, IERC1155MetadataURI, IERC2981 {
         returns (uint256 amount);
 
     /**
-     * @dev Returns the amount of the `tokenId` token that can be transferd by `account`
+     * @dev Returns the amount of the `tokenId` token that can be transferd by `account`.
      */
     function canTransfer(address account, uint256 tokenId)
         external
@@ -56,7 +56,7 @@ interface IArtwork is IERC1155, IERC1155MetadataURI, IERC2981 {
         returns (uint256 allowance);
 
     /**
-     * @dev Returns the amount of the `tokenId` token that can be copied by `account`
+     * @dev Returns the amount of the `tokenId` token that can be copied by `account`.
      */
     function canCopy(address account, uint256 tokenId)
         external
@@ -64,7 +64,7 @@ interface IArtwork is IERC1155, IERC1155MetadataURI, IERC2981 {
         returns (uint256 allowance);
 
     /**
-     * @dev Returns the amount of the `tokenId` token that can be burned by `account`
+     * @dev Returns the amount of the `tokenId` token that can be burned by `account`.
      */
     function canBurn(address account, uint256 tokenId)
         external
@@ -72,29 +72,29 @@ interface IArtwork is IERC1155, IERC1155MetadataURI, IERC2981 {
         returns (uint256 allowance);
 
     /**
-     * @dev Reset the transfer permission for the `tokenId` token for `account`
+     * @dev Reset the transfer permission for the `tokenId` token for `account`.
      */
     function resetTransferAllowance(address account, uint256 tokenId)
         external
         returns (uint256 allowance);
 
     /**
-     * @dev Reset the copy permission for the `tokenId` token for `account`
+     * @dev Reset the copy permission for the `tokenId` token for `account`.
      */
     function resetCopyAllowance(address account, uint256 tokenId)
         external
         returns (uint256 allowance);
 
     /**
-     * @dev Reset the burn permission for the `tokenId` token for `account`
+     * @dev Reset the burn permission for the `tokenId` token for `account`.
      */
     function resetBurnAllowance(address account, uint256 tokenId)
         external
         returns (uint256 allowance);
 
     /**
-     * @dev mint `tokenId` token
-     * Emits an {Utilized} event when some tokens are utilized to compose the `tokenId` token
+     * @dev Mint `tokenId` token.
+     * Emits an {Utilized} event when some tokens are utilized to compose the `tokenId` token.
      */
     function copy(
         address account,
@@ -103,8 +103,8 @@ interface IArtwork is IERC1155, IERC1155MetadataURI, IERC2981 {
     ) external;
 
     /**
-     * @dev burn `tokenId` token
-     * Emits an {Unutilized} event when some tokens are recycled at the moment that the `tokenId` token is burned
+     * @dev Burn `tokenId` token.
+     * Emits an {Unutilized} event when some tokens are recycled at the moment that the `tokenId` token is burned.
      */
     function burn(
         address account,
